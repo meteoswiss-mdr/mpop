@@ -529,13 +529,16 @@ def _get_satellite_altitude(filename):
             return alt_
     return 0
 
-def _finalize(geo_image, dtype=np.uint8):
+def _finalize(geo_image, value_range=None, dtype=np.uint8):
     """Finalize a mpop GeoImage for Ninjo. Specialy take care of phycical scale
     and offset.
 
     :Parameters:
         geo_image : mpop.imageo.geo_image.GeoImage
             See MPOP's documentation.
+       value_range: list or tuple
+            Defining minimum and maximum value range. Data will be clipped into
+            that range. Default is no clipping.
         dtype : type
             Numpy's datatype (np.uint8 or np.uint16).
 
@@ -578,15 +581,23 @@ def _finalize(geo_image, dtype=np.uint8):
             scale = 1
             offset = 0
         else:
-            chn_max = data.max()
-            chn_min = data.min()
+            if value_range:
+                data.clip(value_range[0], value_range[1], data)
+                chn_min = value_range[0]
+                chn_max = value_range[1]
+                LOG.info("Scaling, using value range %.2f - %.2f" %
+                         (value_range[0], value_range[1]))
+            else:
+                chn_min = data.min()
+                chn_max = data.max()
+
             # Reserve 0 for transparent pixel.
             max_val = np.iinfo(dtype).max - 1
-               
-            scale = (chn_max - chn_min)/float(max_val)
+
+            scale = (chn_max - chn_min) / float(max_val)
             scale = scale or 1.
             offset = chn_min
-                
+
             mask = data.mask
             data = ((data.data - offset) / scale).astype(dtype)
             # Move away from 0.
@@ -599,7 +610,7 @@ def _finalize(geo_image, dtype=np.uint8):
 
     elif geo_image.mode == 'RGB':
         channels, fill_value = geo_image._finalize(dtype=dtype)
-        fill_value = fill_value or (0, 0, 0)
+        fill_value = (0, 0, 0)
         for i in range(3):
             channels[i] = channels[i].filled(fill_value[i])
             _log_channel(str(i), channels[i], fill_value[i], 0)
@@ -610,7 +621,8 @@ def _finalize(geo_image, dtype=np.uint8):
         raise ValueError("Don't known how til handle image mode '%s'" %
                          str(geo_image.mode))
 
-def save(geo_image, filename, ninjo_product_name=None, bits_per_sample=8, **kwargs):
+def save(geo_image, filename, ninjo_product_name=None, value_range=None,
+         bits_per_sample=8, **kwargs):
     """MPOP's interface to Ninjo TIFF writer.
 
     :Parameters:
@@ -641,8 +653,10 @@ def save(geo_image, filename, ninjo_product_name=None, bits_per_sample=8, **kwar
     except KeyError:
         raise ValueError("Unsupported bits per sample '%s' (use one of %s)" % 
                          (bits_per_sample, str(bps_to_dtype.keys())))
-    
-    data, scale, offset, fill_value = _finalize(geo_image, dtype=dtype)
+
+    data, scale, offset, fill_value = _finalize(geo_image,
+                                                value_range=value_range,
+                                                dtype=dtype)
     area_def = geo_image.area
     time_slot = geo_image.time_slot
 
