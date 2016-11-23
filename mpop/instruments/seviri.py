@@ -336,7 +336,7 @@ class SeviriCompositer(VisirCompositer):
     snow.prerequisites = refl39_chan.prerequisites | set(
         [0.8, 1.63, 3.75])
 
-    def day_microphysics(self, wintertime=False, fill_value=None):
+    def day_microphysics(self, wintertime=False, fill_value=(0,0,0)):
         """Make a 'Day Microphysics' RGB as suggested in the MSG interpretation guide
         (rgbpart04.ppt). It is kind of special as it requires the derivation of
         the daytime component of the mixed Terrestrial/Solar 3.9 micron
