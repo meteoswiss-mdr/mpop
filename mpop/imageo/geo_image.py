@@ -32,9 +32,13 @@
 
 """Module for geographic images.
 """
+import logging
 import os
 
 import numpy as np
+
+from mpop import CONFIG_PATH
+from mpop.utils import ensure_dir
 
 try:
     from trollimage.image import Image, UnknownImageFormat
@@ -42,11 +46,10 @@ except ImportError:
     from mpop.imageo.image import Image, UnknownImageFormat
 
 
-from mpop import CONFIG_PATH
-import logging
-from mpop.utils import ensure_dir
+import mpop.imageo.formats.writer_options as write_opts
 
 logger = logging.getLogger(__name__)
+
 
 class GeoImage(Image):
     """This class defines geographic images. As such, it contains not only data
@@ -74,7 +77,7 @@ class GeoImage(Image):
 
     def save(self, filename, compression=6,
              tags=None, gdal_options=None,
-             fformat=None, blocksize=256, **kwargs):
+             fformat=None, blocksize=256, writer_options=None, **kwargs):
         """Save the image to the given *filename*. If the extension is "tif",
         the image is saved to geotiff_ format, in which case the *compression*
         level can be given ([0, 9], 0 meaning off). See also
@@ -84,18 +87,44 @@ class GeoImage(Image):
         options for the gdal saving driver. A *blocksize* other than 0 will
         result in a tiled image (if possible), with tiles of size equal to
         *blocksize*.
-
         If the specified format *fformat* is not know to MPOP (and PIL), we
         will try to import module *fformat* and call the method `fformat.save`.
 
+        Use *writer_options* to define parameters that should be forwarded to
+        custom writers. Dictionary keys listed in
+        mpop.imageo.formats.writer_options will be interpreted by this
+        function instead of *compression*, *blocksize* and nbits in
+        *tags* dict.
 
         .. _geotiff: http://trac.osgeo.org/geotiff/
         """
         fformat = fformat or os.path.splitext(filename)[1][1:]
 
+        # prefer parameters in writer_options dict
+        # fill dict if parameters are missing
+        writer_options = writer_options or {}
+        tags = tags or {}
+        if writer_options.get(write_opts.WR_OPT_COMPRESSION, None):
+            compression = writer_options[write_opts.WR_OPT_COMPRESSION]
+        elif compression is not None:
+            writer_options[write_opts.WR_OPT_COMPRESSION] = compression
+
+        if writer_options.get(write_opts.WR_OPT_BLOCKSIZE, None):
+            blocksize = writer_options[write_opts.WR_OPT_BLOCKSIZE]
+        elif blocksize is not None:
+            writer_options[write_opts.WR_OPT_BLOCKSIZE] = blocksize
+
+        if writer_options.get(write_opts.WR_OPT_NBITS, None):
+            tags['NBITS'] = writer_options[write_opts.WR_OPT_NBITS]
+        elif tags.get('NBITS') is not None:
+            writer_options[write_opts.WR_OPT_NBITS] = tags.get('NBITS')
+
         if fformat.lower() in ('tif', 'tiff'):
+            kwargs = kwargs or {}
+            kwargs['writer_options'] = writer_options
             return self.geotiff_save(filename, compression, tags,
-                                     gdal_options, blocksize, **kwargs)
+                                     gdal_options, blocksize,
+                                     **kwargs)
         try:
             # Let image.pil_save it ?
             Image.save(self, filename, compression, fformat=fformat)
@@ -105,8 +134,10 @@ class GeoImage(Image):
             try:
                 saver = __import__(fformat, globals(), locals(), ['save'])
             except ImportError:
-                raise  UnknownImageFormat(
+                raise UnknownImageFormat(
                     "Unknown image format '%s'" % fformat)
+            kwargs = kwargs or {}
+            kwargs['writer_options'] = writer_options
             saver.save(self, filename, **kwargs)
 
     def _gdal_write_channels(self, dst_ds, channels, opacity, fill_value):
@@ -136,7 +167,8 @@ class GeoImage(Image):
     def geotiff_save(self, filename, compression=6,
                      tags=None, gdal_options=None,
                      blocksize=0, geotransform=None,
-                     spatialref=None, floating_point=False):
+                     spatialref=None, floating_point=False,
+                     writer_options=None):
         """Save the image to the given *filename* in geotiff_ format, with the
         *compression* level in [0, 9]. 0 means not compressed. The *tags*
         argument is a dict of tags to include in the image (as metadata).  By
@@ -144,6 +176,9 @@ class GeoImage(Image):
         spatialref information, this can be overwritten by the arguments
         *geotransform* and *spatialref*. *floating_point* allows the saving of
         'L' mode images in floating point format if set to True.
+        When argument *writer_options* is not none and entry 'fill_value_subst'
+        is included, its numeric value will be used to substitute image data
+        that would be equal to the fill_value (used to replace masked data).
 
         .. _geotiff: http://trac.osgeo.org/geotiff/
         """
@@ -152,6 +187,7 @@ class GeoImage(Image):
         raster = gdal.GetDriverByName("GTiff")
 
         tags = tags or {}
+        writer_options = writer_options or {}
 
         if floating_point:
             if self.mode != "L":
@@ -178,6 +214,12 @@ class GeoImage(Image):
                 gformat = gdal.GDT_Byte
             opacity = np.iinfo(dtype).max
             channels, fill_value = self._finalize(dtype)
+
+            fill_value_subst = writer_options.get(
+                write_opts.WR_OPT_FILL_VALUE_SUBST, None)
+            if fill_value is not None and fill_value_subst is not None:
+                for i, chan in enumerate(channels):
+                    np.place(chan, chan == fill_value[i], int(fill_value_subst))
 
         logger.debug("Saving to GeoTiff.")
 
@@ -264,9 +306,7 @@ class GeoImage(Image):
                                       fill_value)
         else:
             raise NotImplementedError("Saving to GeoTIFF using image mode"
-                                      " %s is not implemented."%self.mode)
-
-
+                                      " %s is not implemented." % self.mode)
 
         # Create raster GeoTransform based on upper left corner and pixel
         # resolution ... if not overwritten by argument geotransform.
@@ -285,7 +325,6 @@ class GeoImage(Image):
             except (utils.AreaNotFound, AttributeError):
                 area = self.area
 
-
             try:
                 adfgeotransform = [area.area_extent[0], area.pixel_size_x, 0,
                                    area.area_extent[3], 0, -area.pixel_size_y]
@@ -300,9 +339,8 @@ class GeoImage(Image):
                     pass
                 try:
                     # Check for epsg code.
-                    srs.SetAuthority('PROJCS', 'EPSG',
-                                     int(area.proj_dict['init'].
-                                         split('epsg:')[1]))
+                    srs.ImportFromEPSG(int(area.proj_dict['init'].
+                                           lower().split('epsg:')[1]))
                 except (KeyError, IndexError):
                     pass
                 srs = srs.ExportToWkt()
@@ -319,7 +357,6 @@ class GeoImage(Image):
 
         dst_ds = None
 
-
     def add_overlay(self, color=(0, 0, 0), width=0.5, resolution=None):
         """Add coastline and political borders to image, using *color* (tuple
         of integers between 0 and 255).
@@ -334,8 +371,6 @@ class GeoImage(Image):
         | 'c' | Crude resolution        | 25  km  |
         +-----+-------------------------+---------+
         """
-
-
 
         img = self.pil_image()
 
@@ -394,12 +429,10 @@ class GeoImage(Image):
             for idx in range(len(self.channels)):
                 self.channels[idx] = np.ma.array(arr[:, :, idx] / 255.0)
 
-
     def add_overlay_config(self, config_file):
         """Add overlay to image parsing a configuration file.
-           
-        """
 
+        """
 
         import ConfigParser
         conf = ConfigParser.ConfigParser()
@@ -417,7 +450,6 @@ class GeoImage(Image):
             logger.warning("AGGdraw lib not installed...width and opacity properties are not available for overlays.")
             from pycoast import ContourWriter
             cw_ = ContourWriter(coast_dir)
-            
 
         logger.debug("Getting area for overlay: " + str(self.area))
 
@@ -429,15 +461,14 @@ class GeoImage(Image):
 
         img = self.pil_image()
 
-
         from mpop.projector import get_area_def
         if isinstance(self.area, str):
             self.area = get_area_def(self.area)
         logger.info("Add overlays to image.")
         logger.debug("Area = " + str(self.area.area_id))
 
-        foreground=cw_.add_overlay_from_config(config_file, self.area)
-        img.paste(foreground,mask=foreground.split()[-1])
+        foreground = cw_.add_overlay_from_config(config_file, self.area)
+        img.paste(foreground, mask=foreground.split()[-1])
 
         arr = np.array(img)
 
@@ -446,4 +477,3 @@ class GeoImage(Image):
         else:
             for idx in range(len(self.channels)):
                 self.channels[idx] = np.ma.array(arr[:, :, idx] / 255.0)
-

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright (c) 2010, 2011, 2012, 2013, 2014, 2015.
+# Copyright (c) 2010, 2011, 2012, 2013, 2014, 2015, 2016.
 
 # Author(s):
 
@@ -30,19 +30,19 @@ also for a given area.
 import ConfigParser
 import copy
 import datetime
+import imp
+import logging
 import os.path
+import sys
 import types
 import weakref
-import sys
-import logging
-import imp
 
 import numpy as np
 
+import mpop.satin
 from mpop import CONFIG_PATH
 from mpop.channel import Channel, NotLoadedError
 from mpop.utils import OrderedConfigParser
-import mpop.satin
 
 LOG = logging.getLogger(__name__)
 
@@ -121,7 +121,7 @@ class SatelliteScene(Satellite):
 
         Satellite.__init__(self, satellite)
 
-        #if(time_slot is not None and
+        # if(time_slot is not None and
         #   not isinstance(time_slot, datetime.datetime)):
         #    raise TypeError("Time_slot must be a datetime.datetime instance.")
 
@@ -211,6 +211,10 @@ class SatelliteInstrumentScene(SatelliteScene):
             self.instrument_name = None
 
         self.channels = []
+
+        self.end_time = None
+        if isinstance(self.time_slot, (tuple, list)):
+            self.time_slot, self.end_time = self.time_slot
 
         try:
             conf = OrderedConfigParser()
@@ -471,7 +475,8 @@ class SatelliteInstrumentScene(SatelliteScene):
 
             if "reader_level" in kwargs.keys():
                 if kwargs["reader_level"] != None:
-                    LOG.debug("Using explecit definition of reader level: "+kwargs["reader_level"] )
+                    LOG.debug(
+                        "Using explecit definition of reader level: " + kwargs["reader_level"])
                     if kwargs["reader_level"] != level:
                         continue
 
@@ -594,7 +599,7 @@ class SatelliteInstrumentScene(SatelliteScene):
                        possible choices are (see estimate_cth in mpop/tools.py):
                        "standard", "tropics", "midlatitude summer", "midlatitude winter", "subarctic summer", "subarctic winter"
                        this will choose the corresponding atmospheric AFGL temperature profile
-                     * new choice: "best" -> choose according to central (lon,lat) and time from:  
+                     * new choice: "best" -> choose according to central (lon,lat) and time from:
                        "tropics", "midlatitude summer", "midlatitude winter", "subarctic summer", "subarctic winter"
           time_slot  current observation time as (datetime.datetime() object)
                      time_slot option can be omitted, the function tries to use self.time_slot
@@ -614,10 +619,10 @@ class SatelliteInstrumentScene(SatelliteScene):
         # choose atmosphere
         if cth_atm.lower() == "best":
             # get central lon/lat coordinates
-            (yc,xc) = ir108.shape
-            (lon,lat) = self.area.get_lonlat(yc/2, xc/2)
+            (yc, xc) = ir108.shape
+            (lon, lat) = self.area.get_lonlat(yc / 2, xc / 2)
 
-            if time_slot==None:
+            if time_slot == None:
                 if hasattr(self, 'time_slot'):
                     time_slot = self.time_slot
                 else:
@@ -627,16 +632,16 @@ class SatelliteInstrumentScene(SatelliteScene):
 
             # automatic choise of temperature profile
             doy = time_slot.timetuple().tm_yday
-            print "... automatic choise of temperature profile lon=",lon," lat=",lat,", time=", str(time_slot),", doy=", doy
+            print "... automatic choise of temperature profile lon=", lon, " lat=", lat, ", time=", str(time_slot), ", doy=", doy
             if abs(lat) <= 30.0:
-                cth_atm="tropics"
+                cth_atm = "tropics"
             elif doy < 80 or doy <= 264:
                 # northern summer
                 if lat < -60.0:
                     cth_atm = "subarctic winter"
                 elif -60.0 <= lat and lat < -30.0:
                     cth_atm = "midlatitude winter"
-                elif 30.0 < lat  and lat <= 60.0:
+                elif 30.0 < lat and lat <= 60.0:
                     cth_atm = "midlatitude summer"
                 elif 60.0 < lat:
                     cth_atm = "subarctic summer"
@@ -646,33 +651,33 @@ class SatelliteInstrumentScene(SatelliteScene):
                     cth_atm = "subarctic summer"
                 elif -60.0 <= lat and lat < -30.0:
                     cth_atm = "midlatitude summer"
-                elif 30.0 < lat  and lat <= 60.0:
+                elif 30.0 < lat and lat <= 60.0:
                     cth_atm = "midlatitude winter"
                 elif 60 < lat:
-                    cth_atm = "subarctic winter"                    
+                    cth_atm = "subarctic winter"
             print "    choosing temperature profile for ", cth_atm
 
-        # estimate cloud top height by searching first fit of ir108 with temperature profile
+        # estimate cloud top height by searching first fit of ir108 with
+        # temperature profile
         from mpop.tools import estimate_cth
         cth = estimate_cth(ir108, cth_atm=cth_atm)
 
         # create new channel named "CTH"
         self.channels.append(Channel(name="CTH",
-                             wavelength_range=[0.,0.,0.],
-                             resolution=self["IR_108"].resolution, 
-                             data=cth,
-                             calibration_unit="m"))
+                                     wavelength_range=[0., 0., 0.],
+                                     resolution=self["IR_108"].resolution,
+                                     data=cth,
+                                     calibration_unit="m"))
 
         # copy additional information from IR_108
         self["CTH"].info = self["IR_108"].info
         self["CTH"].info['units'] = 'm'
-        self["CTH"].area       = self["IR_108"].area
-        self["CTH"].area_id    = self["IR_108"].area_id
-        self["CTH"].area_def   = self["IR_108"].area_def
+        self["CTH"].area = self["IR_108"].area
+        self["CTH"].area_id = self["IR_108"].area_id
+        self["CTH"].area_def = self["IR_108"].area_def
         self["CTH"].resolution = self["IR_108"].resolution
-        
-        return cth
 
+        return cth
 
     def parallax_corr(self, fill="False", estimate_cth=False, cth_atm='best', replace=False):
         """
@@ -683,19 +688,21 @@ class SatelliteInstrumentScene(SatelliteScene):
         if len(loaded_channels) == 0:
             return
 
-        # loop over channels and check, if one is a normal radiance channel 
+        # loop over channels and check, if one is a normal radiance channel
         # having the method to calculate the viewing geometry
         for chn in self.loaded_channels():
             if hasattr(chn, 'get_viewing_geometry'):
                 # calculate the viewing geometry of the SEVIRI sensor
                 print "... calculate viewing geometry using ", chn.name
-                (azi, ele) = chn.get_viewing_geometry(self.get_orbital(), self.time_slot)
+                (azi, ele) = chn.get_viewing_geometry(
+                    self.get_orbital(), self.time_slot)
                 break
 
         # choose best way to get CTH for parallax correction
         if not estimate_cth:
             if "CTTH" in loaded_channels:
-                # make a copy of CTH, as it might get replace by its parallax corrected version
+                # make a copy of CTH, as it might get replace by its parallax
+                # corrected version
                 cth = copy.deepcopy(self["CTTH"].height)
             else:
                 print "*** Error in parallax_corr (mpop.scene.py)"
@@ -703,7 +710,7 @@ class SatelliteInstrumentScene(SatelliteScene):
                 print "    please load the NWC-SAF CTTH product (recommended) or"
                 print "    activate the option data.parallax_corr( estimate_cth=True )"
                 quit()
-        else: 
+        else:
             if "IR_108" in loaded_channels:
                 # try to estimate CTH with IR_108
                 self.estimate_cth()
@@ -723,17 +730,18 @@ class SatelliteInstrumentScene(SatelliteScene):
                     chn_name_PC = chn.name
                     print "    replace channel ", chn_name_PC
                 else:
-                    chn_name_PC = chn.name+"_PC"
-                    print "    create channel ", chn_name_PC 
-                
-                # take care of the parallax correction 
-                self[chn_name_PC] = chn.parallax_corr(cth=cth, azi=azi, ele=ele, fill=fill)
+                    chn_name_PC = chn.name + "_PC"
+                    print "    create channel ", chn_name_PC
+
+                # take care of the parallax correction
+                self[chn_name_PC] = chn.parallax_corr(
+                    cth=cth, azi=azi, ele=ele, fill=fill)
             else:
                 LOG.warning("Channel " + str(chn.name) + " has no attribute parallax_corr,"
                             "thus parallax effect wont be corrected.")
                 print "Channel " + str(chn.name) + " has no attribute parallax_corr,"
                 print "thus parallax effect wont be corrected."
-                   
+
         return self
 
     def project(self, dest_area, channels=None, precompute=False, mode=None,

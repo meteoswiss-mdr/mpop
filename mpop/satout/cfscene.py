@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright (c) 2010, 2011, 2012, 2014.
+# Copyright (c) 2010, 2011, 2012, 2014, 2016.
 
 # Author(s):
 
@@ -59,9 +59,15 @@ class CFScene(object):
     with the *scene* to transform as argument.
     """
 
-    def __init__(self, scene, dtype=np.int16, band_axis=2):
+    def __init__(self, scene, dtype=np.int16, band_axis=2,
+                 area_aggregation=True,
+                 time_dimension=False):
         if not issubclass(dtype, np.integer):
             raise TypeError('Only integer saving allowed for CF data')
+
+        time_axis = -1
+        if time_dimension:
+            time_axis = 0
 
         self.info = scene.info.copy()
         if "time" in self.info:
@@ -70,7 +76,8 @@ class CFScene(object):
 
         # Other global attributes
         self.info["Conventions"] = "CF-1.5"
-        self.info["platform"] = scene.satname + "-" + str(scene.number)
+        #self.info["platform"] = scene.satname + "-" + str(scene.number)
+        self.info["platform"] = scene.fullname
         self.info["instrument"] = scene.instrument_name
         if scene.variant:
             self.info["service"] = scene.variant
@@ -80,9 +87,14 @@ class CFScene(object):
         self.time = InfoObject()
         self.time.data = date2num(scene.time_slot,
                                   TIME_UNITS)
+        if time_dimension:
+            var_dim_names = ("time", )
+        else:
+            var_dim_names = ()
+
         self.time.info = {"var_name": "time",
                           "var_data": self.time.data,
-                          "var_dim_names": (),
+                          "var_dim_names": var_dim_names,
                           "long_name": "Nominal time of the image",
                           "standard_name": "time",
                           "units": TIME_UNITS}
@@ -105,6 +117,7 @@ class CFScene(object):
                 continue
 
             fill_value = np.iinfo(CF_DATA_TYPE).min
+
             if ma.count_masked(chn.data) == chn.data.size:
                 # All data is masked
                 data = np.ones(chn.data.shape, dtype=CF_DATA_TYPE) * fill_value
@@ -132,7 +145,10 @@ class CFScene(object):
                 else:
                     data = ((chn.data - offset) / scale).astype(CF_DATA_TYPE)
 
-            data = np.ma.expand_dims(data, band_axis)
+            if time_dimension:
+                data = np.ma.expand_dims(data, time_axis)
+            elif area_aggregation:
+                data = np.ma.expand_dims(data, band_axis)
 
             # it's a grid mapping
             try:
@@ -231,6 +247,7 @@ class CFScene(object):
                                  "var_data": lons.data,
                                  "var_dim_names": ("y" + str_arc,
                                                    "x" + str_arc),
+                                 "_FillValue": lons.data.fill_value,
                                  "units": "degrees east",
                                  "long_name": "longitude coordinate",
                                  "standard_name": "longitude"}
@@ -247,6 +264,7 @@ class CFScene(object):
                                  "var_data": lats.data,
                                  "var_dim_names": ("y" + str_arc,
                                                    "x" + str_arc),
+                                 "_FillValue": lats.data.fill_value,
                                  "units": "degrees north",
                                  "long_name": "latitude coordinate",
                                  "standard_name": "latitude"}
@@ -258,7 +276,9 @@ class CFScene(object):
                                        lons.info["var_name"])
                 xy_names = ["y" + str_arc, "x" + str_arc]
 
-            if (chn.area, chn.info['units']) in area_units:
+            if (area_aggregation and not time_dimension and
+                    (chn.area, chn.info['units']) in area_units):
+
                 str_cnt = str(area_units.index((chn.area, chn.info['units'])))
                 # area has been used before
                 band = getattr(self, "band" + str_cnt)
@@ -307,7 +327,11 @@ class CFScene(object):
                 band = InfoObject()
                 band.data = data
                 dim_names = xy_names
-                dim_names.insert(band_axis, 'band' + str_cnt)
+                if time_dimension:
+                    dim_names.insert(time_axis, 'time')
+                elif area_aggregation:
+                    dim_names.insert(band_axis, 'band' + str_cnt)
+
                 band.info = {"var_name": "Image" + str_cnt,
                              "var_data": band.data,
                              'var_dim_names': dim_names,
@@ -318,11 +342,12 @@ class CFScene(object):
 
                 # bandname
 
+                var_dim_names = ("band" + str_cnt,)
                 bandname = InfoObject()
                 bandname.data = np.array([chn.name], 'O')
                 bandname.info = {"var_name": "band" + str_cnt,
                                  "var_data": bandname.data,
-                                 "var_dim_names": ("band" + str_cnt,),
+                                 "var_dim_names": var_dim_names,
                                  "standard_name": "band_name"}
                 setattr(self, "bandname" + str_cnt, bandname)
 
@@ -360,13 +385,22 @@ class CFScene(object):
                 else:
                     band.info["coordinates"] = coordinates
 
+                # Add other (custom) attributes:
+                # Only scalar attributes!
+                for key in chn.info.keys():
+                    if key not in band.info.keys():
+                        if (type(chn.info[key]) == str or type(chn.info[key]) == int or
+                                type(chn.info[key]) == float):
+                            band.info[key] = chn.info[key]
+
                 setattr(self, "band" + str_cnt, band)
 
         for i, area_unit in enumerate(area_units):
             # compute data reduction
             fill_value = np.iinfo(CF_DATA_TYPE).min
             band = getattr(self, "band" + str(i))
-            # band.info["valid_range"] = np.array([valid_min, valid_max]),
+            valid_min, valid_max = band.data.min(), band.data.max()
+            band.info["valid_range"] = np.array([valid_min, valid_max]),
 
     def save(self, filename, *args, **kwargs):
         return netcdf_cf_writer(filename, self, kwargs.get("compression", True))

@@ -512,6 +512,7 @@ class ViirsBandData(object):
             geofilepaths = [os.path.join(geodir, geofilepath)
                             for geofilepath in self.geo_filenames]
 
+        geofilepaths = sorted(geofilepaths)
         logger.debug("Geo-files = " + str(geofilepaths))
         self.geolocation = ViirsGeolocationData(self.data.shape,
                                                 geofilepaths).read()
@@ -561,6 +562,8 @@ class ViirsSDRReader(Reader):
         else:
             logger.error("Band type %s not supported", bandtype)
             return None
+
+        geofilenames = sorted(geofilenames)
 
         data = {}
         mask = {}
