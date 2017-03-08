@@ -96,17 +96,39 @@ def load(satscene, calibrate=True, area_extent=None, **kwargs):
     # end of scan time 4 min after start 
     end_time = satscene.time_slot + datetime.timedelta(minutes=dt_end)
 
-    filename = os.path.join( end_time.strftime(conf.get(reader_level, "dir", raw=True)),
-                             end_time.strftime(conf.get(reader_level, "filename", raw=True)) % values )
-    
-    print "... search for file: ", filename
-    filenames=glob(str(filename))
+    filename_pattern = os.path.join( end_time.strftime(conf.get(reader_level, "dir", raw=True)),
+                              end_time.strftime(conf.get(reader_level, "filename", raw=True)) % values )
+
+    print "... search for file: ", filename_pattern
+    filenames=glob(str(filename_pattern))
+
     if len(filenames) == 0:
         print "*** Error, no file found"
         return # just return without exit the program 
-    elif len(filenames) > 1:
-        print "*** Warning, more than 1 datafile found: ", filenames 
-    filename = filenames[0]
+    elif len(filenames) >= 1:
+        if len(filenames) > 1:
+            print "*** Warning, more than 1 datafile found: ", filenames 
+        # possible formats: 
+        # MSG2-SEVI-MSG15-0100-NA-20160528233414.576000000Z-20160528233432-1185626-3.h5
+        # MSG2-SEVI-MSG15-0100-NA-20160528233414.576000000Z-20160528233432-1185626-3.h5.bz2
+        fileformats = [filename.split(".")[-1] for filename in filenames]
+
+        if 'h5' in fileformats:
+            # read hdf5 
+            filename = filenames[fileformats.index('h5')]
+        elif 'bz2' in fileformats:
+            from subprocess import call
+            from ntpath import basename
+            infile = filenames[fileformats.index('bz2')]
+            call("cp "+ infile+" /tmp 2>&1", shell=True)
+            tmpfile = '/tmp/'+basename(infile)
+            call("/bin/bunzip2 "+ tmpfile+" 2>&1", shell=True) 
+            filename = tmpfile[:-4]
+        else:
+            print "***ERROR, unknown file format"
+            print fileformats
+            quit()
+
     print("... read data from %s" % str(filename))
 
     # read data from hdf5 file 
