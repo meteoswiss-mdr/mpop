@@ -70,9 +70,10 @@ def load(satscene, **kargs):
     elif 'gz' in fileformats:
         # unzip 
         from subprocess import call
+        from ntpath import basename
         infile = filenames[fileformats.index('gz')]
-        outfile = infile[:-3]
-        print "    unizp ", infile 
+        outfile = '/tmp/'+basename(infile[:-3])
+        print "    unzip ", infile 
         # gunzip -c h03_20150513_1557_rom.grb.gz > h03_20150513_1557_rom.grb
         # call("/bin/gunzip "+ infile                +" 2>&1", shell=True) # dont keep gz file 
         call("/bin/gunzip -c "+ infile+" > "+ outfile  +" 2>&1", shell=True) # keep gz file 
@@ -81,6 +82,7 @@ def load(satscene, **kargs):
             data, fill_value, units, long_name = read_h03_grib(outfile)
         elif outfile.split(".")[-1] == 'nc':
             data, fill_value, units, long_name = read_h03_netCDF(outfile)
+        call("rm "+ outfile  +" 2>&1", shell=True) # delete tmporary file 
 
     if units == "kg m**-2 s**-1" or units == "kg m-2s-1":
         data *= 3600 
