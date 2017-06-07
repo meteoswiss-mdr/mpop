@@ -30,11 +30,18 @@ def load(satscene, *args, **kwargs):
     conf = ConfigParser()
     conf.read(os.path.join(CONFIG_PATH, satscene.fullname + ".cfg"))
 
+    min_ot_probability = ""
+    min_ot_anvilmean_brightness_temperature_difference = ""
+
     values = {"orbit": satscene.orbit,
               "satname": satscene.satname,
               "number": satscene.number,
-              "instrument": satscene.instrument_name,
+              "instrument": satscene.instrument_name
               }
+
+    # read filters from config file
+    satscene.min_ot_probability = float(conf.get("Overshooting_Tops-level2", "min_ot_probability"))
+    satscene.min_ot_anvilmean_brightness_temperature_difference = float(conf.get("Overshooting_Tops-level2", "min_ot_anvilmean_brightness_temperature_difference"))
 
     # print values
     if "area" in kwargs:
@@ -42,7 +49,7 @@ def load(satscene, *args, **kwargs):
     else:
         projectionName = conf.get("Overshooting_Tops-level2", "projection")
         #projectionName = "ccs4"
-    print "... project lightning data to ", projectionName
+        
     #scale = conf.get("radar-1", "scale")
     #print '... read scale from: ', scale
 
@@ -65,25 +72,87 @@ def load(satscene, *args, **kwargs):
 
     from netCDF4 import Dataset
     fh = Dataset(filename, mode='r')
-        
+
+    vars_1d = ['latitude','longitude','time']
+    vars_3d = ['ir_brightness_temperature',
+               'ot_rating_ir',
+               'ot_id_number',
+               'ot_anvilmean_brightness_temperature_difference',
+               'ir_anvil_detection',
+               'visible_reflectance',
+               'ot_rating_visible',
+               'ot_rating_shadow',
+               'ot_probability',
+               'surface_based_cape',
+               'most_unstable_cape',
+               'most_unstable_equilibrium_level_temperature',
+               'tropopause_temperature',
+               'surface_1km_wind_shear',
+               'surface_3km_wind_shear',
+               'surface_6km_wind_shear',
+               'ot_potential_temperature',
+               'ot_height',
+               'ot_pressure',
+               'parallax_correction_latitude',
+               'parallax_correction_longitude']
+
+    proj = 'eqc'
+    lon_0 = 0
+    from pyproj import Proj
+    p = Proj(proj=proj, ellps="WGS84", lon_0=lon_0, lat_0=0) # , units="m"
+
+    lats = fh.variables['latitude'][:]
+    lons = fh.variables['longitude'][:]
+    obs_time = fh.variables['time'][:]
+    
+    left=lons.min()
+    right=lons.max()
+    down=lats.min()
+    up=lats.max()
+    
+    left_ex1,  up_ex1   = p(left, up)    # 3, 1
+    right_ex1, up_ex2   = p(right, up)   # 4, 1
+    left_ex2,  down_ex1 = p(left, down)  # 3, 2 
+    right_ex2, down_ex2 = p(right, down) # 4, 2
+
+    area_extent = (min(left_ex1,  left_ex2),
+                   max(down_ex1,  down_ex2),
+                   max(right_ex1, right_ex2),
+                   min(up_ex1,    up_ex2))
+    
+    #print area_extent
+    proj_dict = {'proj': 'eqc', 'lon_0': '0.0', 'lat_0': '0.0'}
+
+    from pyresample.geometry import AreaDefinition
+    area_def = AreaDefinition('aroundSwitzerland',
+                              "On-the-fly area",
+                              'eqc',
+                              proj_dict,
+                              len(lons),
+                              len(lats),
+                              area_extent)
+    #print area_def
+    satscene.area = area_def
+    
+    if satscene.min_ot_probability > 0.0:
+        print "    min_ot_probability specified by configuration file:", satscene.min_ot_probability
+        satscene.channels_to_load.add("ot_probability")
+    if satscene.min_ot_anvilmean_brightness_temperature_difference > 0.0:
+        print "... min_ot_anvilmean_brightness_temperature_difference specified by configuration file:", satscene.min_ot_anvilmean_brightness_temperature_difference
+        satscene.channels_to_load.add("ot_anvilmean_brightness_temperature_difference")
+    
     print "... channels to load ", satscene.channels_to_load
     for chn_name in satscene.channels_to_load:
+    
         # Read variable corresponding to channel name
         print "... channel to read ", chn_name
-        if chn_name == 'longitude':
-            satscene[chn_name] = fh.variables['longitude'][:]
-        if chn_name == 'latitude':
-            satscene[chn_name] = fh.variables['latitude'][:]
-        elif chn_name == 'ir_brightness_temperature':
-            satscene[chn_name] = fh.variables['ir_brightness_temperature'][0,:,:]
-        elif chn_name == 'ot_potential_temperature':
-            satscene[chn_name] = fh.variables['ot_potential_temperature'][0,:,:]
-        elif chn_name == 'ot_height':
-            satscene[chn_name] = fh.variables['ot_height'][0,:,:]
-        elif chn_name == 'ot_pressure':
-            satscene[chn_name] = fh.variables['ot_pressure'][0,:,:]
-        elif chn_name == 'ot_anvilmean_brightness_temperature_difference':
-            satscene[chn_name] = fh.variables['ot_anvilmean_brightness_temperature_difference'][0,:,:]
+        if chn_name in vars_3d:
+            netCDF_data = fh.variables[chn_name]
+            satscene[chn_name] = ma.array(netCDF_data[0,:,:]) # skip the first dimension, which is time (in test dataset only 1 entry)
+            print "    "+chn_name, satscene[chn_name].data.min(), satscene[chn_name].data.max()
+            if u"units" in netCDF_data.ncattrs():
+              satscene[chn_name].info['units'] = netCDF_data.getncattr(u'units').replace("degrees_Kelvin","dT/K")
+            
         elif chn_name == 'position_parallax_corrected':
             lons_pc = fh.variables['parallax_correction_longitude'][0,:,:]
             lats_pc = fh.variables['parallax_correction_latitude'][0,:,:]
@@ -98,6 +167,30 @@ def load(satscene, *args, **kwargs):
             satscene.area = projection
             
 
+    if satscene.min_ot_probability > 0.0:
+      for chn_name in satscene.channels_to_load:
+        if chn_name != 'ir_anvil_detection':
+          print "... filter "+chn_name+" with min_ot_probability = "+str(satscene.min_ot_probability)
+          satscene[chn_name].data = np.ma.masked_where(
+                    satscene["ot_probability"].data < satscene.min_ot_probability, 
+                    satscene[chn_name].data)
+          print "    "+chn_name, satscene[chn_name].data.min(), satscene[chn_name].data.max()
+
+    if satscene.min_ot_anvilmean_brightness_temperature_difference > 0.0:
+      for chn_name in satscene.channels_to_load:
+        if chn_name != 'ir_anvil_detection':      
+          print "... filter "+chn_name+" with min_ot_anvilmean_brightness_temperature_difference = "+str(satscene.min_ot_anvilmean_brightness_temperature_difference)
+          satscene[chn_name].data = np.ma.masked_where(
+                    satscene["ot_anvilmean_brightness_temperature_difference"].data < satscene.min_ot_anvilmean_brightness_temperature_difference, 
+                    satscene[chn_name].data )
+          print "    "+chn_name, satscene[chn_name].data.min(), satscene[chn_name].data.max()
+
+    plot_daytime=True
+    if plot_daytime:
+        for chn_name in satscene.channels_to_load:
+            satscene[chn_name].data.data[:,:] = float(satscene.time_slot.hour) + float(satscene.time_slot.minute)/60.
+            print "*** replace data for "+chn_name+" with daytime", float(satscene.time_slot.hour) + float(satscene.time_slot.minute)/60.
+          
 # ---------------------------------------------------------------------------------
 
 def lon_lat_to_dens(lons, lats, obj_area):
