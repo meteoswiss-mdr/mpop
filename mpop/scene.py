@@ -85,7 +85,11 @@ class Satellite(object):
 
     def sat_nr(self, string=False):
         import re
-        sat_nr = re.findall(r'\d+', self.fullname)[0]
+        sat_nr = re.findall(r'\d+', self.fullname)
+        if len(sat_nr)>0:
+          sat_nr = sat_nr[0]
+        else:
+          sat_nr=0
         if string:
             return sat_nr
         else:

@@ -3,8 +3,15 @@
 from ConfigParser import ConfigParser
 from mpop import CONFIG_PATH
 import os
-##from netCDF4 import Dataset  ### !!! dont use this !!!
-from Scientific.IO.NetCDF import NetCDFFile
+
+try:
+    from Scientific.IO.NetCDF import NetCDFFile
+    reading_package="ScientificPython"
+except ImportError:
+    ## from netCDF4 import Dataset ### !!! dont use this !!! (old comment) ???
+    from scipy.io import netcdf
+    reading_package="scipy"
+
 import numpy.ma as ma
 from glob import glob
 from mpop.projector import get_area_def
@@ -49,13 +56,18 @@ def load(satscene, **kargs):
     print("... read data from %s" % str(filename))
 
     # Load data from netCDF file
-    ncfile = NetCDFFile(filename, 'r')
+    print "    use netCDF reading package: ", reading_package
+    if reading_package == "ScientificPython":
+        ncfile = NetCDFFile(filename, 'r')
+    elif reading_package == "scipy":
+        ncfile = netcdf.netcdf_file(filename, 'r')
+
     for chn_name in satscene.channels_to_load: 
         # Read variable corresponding to channel name
         data = ncfile.variables[chn_name][:]   # attention [:,:] or [:] is really necessary
-        print type(data)                       # it converts 'NetCDFVariable' to 'numpy.ndarray'
-        print data.ndim
-        print data.shape
+        #print type(data)                       # it converts 'NetCDFVariable' to 'numpy.ndarray'
+        #print data.ndim
+        #print data.shape
 
         data_m = ma.masked_array(data) # convert numpy array to masked array 
         data_m.mask = (data == 999.0)  # create mask 
@@ -73,11 +85,11 @@ def load(satscene, **kargs):
         satscene[chn_name].info['units'] = units[chn_name]
         satscene[chn_name].long_name  = long_names[chn_name]
 
-        # extract string for the area from filename 
-        area = filename[filename.rfind("_")+1:filename.rfind(".")]
-        print "... set area to ", area 
-        # !!! BAD: THIS INFORMATION SHOULD BE SAVED IN THE FILE !!!
-        satscene.area = get_area_def(area)
-
     # close the file.
-    ncfile.close()
+    ncfile.close()        
+
+    # extract string for the area from filename 
+    area = filename[filename.rfind("_")+1:filename.rfind(".")]
+    print "... set area to ", area 
+    # !!! BAD: THIS INFORMATION SHOULD BE SAVED IN THE FILE !!!
+    satscene.area = get_area_def(area)
