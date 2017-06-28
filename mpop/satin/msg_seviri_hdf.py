@@ -113,6 +113,7 @@ def load(satscene, calibrate=True, area_extent=None, **kwargs):
         # MSG2-SEVI-MSG15-0100-NA-20160528233414.576000000Z-20160528233432-1185626-3.h5.bz2
         fileformats = [filename.split(".")[-1] for filename in filenames]
 
+        copy_file=False
         if 'h5' in fileformats:
             # read hdf5 
             filename = filenames[fileformats.index('h5')]
@@ -122,8 +123,12 @@ def load(satscene, calibrate=True, area_extent=None, **kwargs):
             infile = filenames[fileformats.index('bz2')]
             call("cp "+ infile+" /tmp 2>&1", shell=True)
             tmpfile = '/tmp/'+basename(infile)
-            call("/bin/bunzip2 "+ tmpfile+" 2>&1", shell=True) 
+            print "... bunzip2 "+tmpfile
+            call("/bin/bunzip2 "+ tmpfile+" 2>&1", shell=True)
+            print "... remove "+tmpfile
+            call("rm "+ tmpfile+" 2>&1", shell=True)
             filename = tmpfile[:-4]
+            copy_file=True
         else:
             print "***ERROR, unknown file format"
             print fileformats
@@ -285,3 +290,6 @@ def load(satscene, calibrate=True, area_extent=None, **kwargs):
                 LOG.info("*** Warning, no data for channel "+ chn_name+" in file "+filename)
                 # do not append the channel chn_name
 
+    if copy_file:
+        print "... remove "+filename
+        call("rm "+filename+" 2>&1", shell=True) 
