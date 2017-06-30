@@ -2985,8 +2985,6 @@ def load(scene, **kwargs):
             ct_chan_plax.resolution = ct_chan_plax.area.pixel_size_x
             scene.channels.append(ct_chan_plax)
 
-    print "*** hallo world***"
-
     if "CTTH" in scene.channels_to_load:
         filename_wildcards = (scene.time_slot.strftime(pathname)
                     % {"number": "03",
