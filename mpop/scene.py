@@ -683,9 +683,30 @@ class SatelliteInstrumentScene(SatelliteScene):
 
         return cth
 
-    def parallax_corr(self, fill="False", estimate_cth=False, cth_atm='best', replace=False):
+    def parallax_corr(self, fill="False", estimate_cth=False, cth=None, cth_atm='best', replace=False):
         """
-        perform the CTH parallax corretion for all loaded channels
+        General purpose
+        ===============
+           perform the CTH parallax corretion for all loaded channels
+ 
+       Example call
+        ============
+           global_sat = global_sat.parallax_corr(fill='bilinear', estimate_cth=True, replace=True)
+        input arguments
+        ===============
+          fill          * string: when shifing gaps occur in the dataset
+                          if "False" -> dont fill gaps
+                          otherwise give method for interpolation, e.g. "nearest" or "bilinear"
+                          see channel.py -> function parallax_corr 
+          estimate_cth  * estimate cloud top height or use CTH from NWC-SAF
+                          either assumes that CTTH is loaded into the global_data 
+                          or that cth is given explicitely by the cth argument
+          cth           * cloud top height masked array 
+                          has to be in exactly same projection as all loaded channels
+          cth_atm       * using temperature profile to estimate the cloud top height
+                          see estimate_cth
+          replace       * boolean: if true, data inside channel object is replaced
+                          if false, new channel created, e.g. "IR_108" -> "IR_108_PC"
         """
 
         loaded_channels = [chn.name for chn in self.loaded_channels()]
@@ -704,20 +725,29 @@ class SatelliteInstrumentScene(SatelliteScene):
 
         # choose best way to get CTH for parallax correction
         if not estimate_cth:
-            if "CTTH" in loaded_channels:
-                # make a copy of CTH, as it might get replace by its parallax
-                # corrected version
-                cth = copy.deepcopy(self["CTTH"].height)
+            if cth == None:
+                if "CTTH" in loaded_channels:
+                    # make a copy of CTH, as it might get replace by its parallax
+                    # corrected version
+                    cth = copy.deepcopy(self["CTTH"].height)
+                else:
+                    print "*** Error in parallax_corr (mpop.scene.py)"
+                    print "    parallax correction needs some cloud top height information"
+                    print "    please load the NWC-SAF CTTH product (recommended) or"
+                    print "    activate the option data.parallax_corr( estimate_cth=True )"
+                    quit()
             else:
-                print "*** Error in parallax_corr (mpop.scene.py)"
-                print "    parallax correction needs some cloud top height information"
-                print "    please load the NWC-SAF CTTH product (recommended) or"
-                print "    activate the option data.parallax_corr( estimate_cth=True )"
-                quit()
+                # check if cth has the same size as channels
+                for chn in self.loaded_channels():
+                    if isinstance(chn, mpop.channel.Channel):
+                        print type(chn)
+                        if not chn.data.shape==cth.shape:
+                            raise ValueError("The shape of the channels and the cth must agree.")
+ 
         else:
             if "IR_108" in loaded_channels:
                 # try to estimate CTH with IR_108
-                self.estimate_cth()
+                self.estimate_cth(cth_atm=cth_atm)
                 cth = self["CTH"].data
             else:
                 print "*** Error in parallax_corr (mpop.scene.py)"
@@ -728,23 +758,26 @@ class SatelliteInstrumentScene(SatelliteScene):
 
         # perform parallax correction for each loaded channel
         for chn in self.loaded_channels():
-            if hasattr(chn, 'parallax_corr'):
-                print "... perform parallax correction for ", chn.name
-                if replace:
-                    chn_name_PC = chn.name
-                    print "    replace channel ", chn_name_PC
-                else:
-                    chn_name_PC = chn.name + "_PC"
-                    print "    create channel ", chn_name_PC
+            if isinstance(chn, mpop.channel.Channel):
+                if hasattr(chn, 'parallax_corr'):
+                    print "... perform parallax correction for ", chn.name
+                    if replace:
+                        chn_name_PC = chn.name
+                        print "    replace channel ", chn_name_PC
+                    else:
+                        chn_name_PC = chn.name + "_PC"
+                        print "    create channel ", chn_name_PC
 
-                # take care of the parallax correction
-                self[chn_name_PC] = chn.parallax_corr(
-                    cth=cth, azi=azi, ele=ele, fill=fill)
+                    # take care of the parallax correction
+                    self[chn_name_PC] = chn.parallax_corr(
+                        cth=cth, azi=azi, ele=ele, fill=fill)
+                else:
+                    LOG.warning("Channel " + str(chn.name) + " has no attribute parallax_corr,"
+                                "thus parallax effect wont be corrected.")
+                    print "Channel " + str(chn.name) + " has no attribute parallax_corr,"
+                    print "thus parallax effect wont be corrected."
             else:
-                LOG.warning("Channel " + str(chn.name) + " has no attribute parallax_corr,"
-                            "thus parallax effect wont be corrected.")
-                print "Channel " + str(chn.name) + " has no attribute parallax_corr,"
-                print "thus parallax effect wont be corrected."
+                print "... Warning, cannot perform parallax correction for tpye: ", type(chn)
 
         return self
 
