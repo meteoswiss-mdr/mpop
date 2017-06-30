@@ -673,8 +673,7 @@ class Channel(GenericChannel):
                 print "    data[\"IR_108\"].parallax_corr(data[\"CTTH\"].height, azi=azi, ele=ele)"
                 quit()
             else:
-                print (
-                    "... calculate viewing geometry (orbit and time are given)")
+                print ("... calculate viewing geometry (orbit and time are given)")
                 (azi, ele) = self.get_viewing_geometry(orbital, time_slot)
         else:
             print ("... azimuth and elevation angle given")
@@ -685,10 +684,14 @@ class Channel(GenericChannel):
         # Elevation displacement
         dz = cth_ / np.tan(np.deg2rad(ele))
 
-        # Create the new channel (by copying) and initialize the data with None
-        # values
+        # Create the new channel (by copying) and initialize the data with None values
         new_ch = copy.deepcopy(self)
-        new_ch.data[:, :] = np.nan
+
+        if isinstance(new_ch.data.data[0,0],np.uint8):
+            new_ch.data=new_ch.data.astype(float)
+            inttofloat = True
+            
+        new_ch.data[:,:] = np.nan
 
         # Set the name
         new_ch.name += '_PC'
@@ -700,11 +703,9 @@ class Channel(GenericChannel):
         (proj_x, proj_y) = self.area.get_proj_coords()
 
         print "... calculate parallax shift"
-        # shifting pixels according to parallax corretion
-        # shift West-East   in m  # ??? sign correct ???
-        proj_x_pc = proj_x - np.sin(np.deg2rad(azi)) * dz
-        # shift North-South in m
-        proj_y_pc = proj_y + np.cos(np.deg2rad(azi)) * dz
+        # shifting pixels according to parallax corretion 
+        proj_x_pc = proj_x + np.sin(np.deg2rad(azi)) * dz # shift  West-East in m  
+        proj_y_pc = proj_y + np.cos(np.deg2rad(azi)) * dz # shift North(0)-South(positiv) in m
 
         # get indices for the pixels for the original position
         (y, x) = self.area.get_xy_from_proj_coords(proj_x, proj_y)
@@ -755,6 +756,9 @@ class Channel(GenericChannel):
             print "*** Error in parallax_corr (channel.py)"
             print "    unknown gap fill method ", fill
             quit()
+
+        if 'inttofloat' in locals():
+            new_ch.data = new_ch.data.astype(int)
 
         return new_ch
 

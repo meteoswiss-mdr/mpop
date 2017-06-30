@@ -66,10 +66,13 @@ def load(satscene, **kargs):
         #print '(A min/max) ',data.min(),data.max()
 
         #cot:units = "1" ;
-        units = ds.variables[chn_name].getncattr("units")
-        if units=="1":
+        try:
+            units = ds.variables[chn_name].getncattr("units")
+            if units=="1":
+                units=None
+            print "... units ", units
+        except AttributeError:
             units=None
-        print "... units ", units
 
         if chn_name == 'cph':
             data = ma.masked_equal( data, 0 ) # 0 == no clouds
