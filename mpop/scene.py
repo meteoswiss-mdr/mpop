@@ -45,6 +45,8 @@ from mpop.channel import Channel, NotLoadedError
 from mpop.utils import OrderedConfigParser
 
 LOG = logging.getLogger(__name__)
+#LOG.setLevel(20)
+#CRITICAL 50 #ERROR 40 #WARNING 30 #INFO 20 #DEBUG 10 #NOTSET 0
 
 try:
     # Work around for on demand import of pyresample. pyresample depends

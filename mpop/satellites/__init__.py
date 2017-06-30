@@ -36,9 +36,9 @@ import logging
 from mpop import CONFIG_PATH
 from mpop.scene import SatelliteInstrumentScene
 
-
 LOG = logging.getLogger(__name__)
-
+LOG.setLevel(20)
+#CRITICAL 50 #ERROR 40 #WARNING 30 #INFO 20 #DEBUG 10 #NOTSET 0
 
 def get_custom_composites(name):
     """Get the home made methods for building composites for a given satellite
@@ -79,6 +79,8 @@ def get_sat_instr_compositer((satellite, number, variant), instrument):
     module_name = variant + satellite + number
     class_name = (variant.capitalize() + satellite.capitalize() +
                   number.capitalize() + instrument.capitalize())
+
+    LOG.debug("... search in get_sat_instr_compositer for module_name = %s", str(module_name))
 
     try:
         module = __import__(module_name, globals(), locals(), [class_name])
@@ -167,6 +169,7 @@ class GeostationaryFactory(object):
         """Create a compound satellite scene.
         """
 
+        LOG.debug("... start GeostationaryFactory")
         return GenericFactory.create_scene(satname, satnumber, instrument,
                                            time_slot, None, area, variant)
 
@@ -197,6 +200,7 @@ class GenericFactory(object):
         """Create a compound satellite scene.
         """
 
+        LOG.debug("... start satellites/__init__.py GenericFactory.create_scene")
         satellite = (satname, satnumber, variant)
 
         instrument_scene = SatelliteInstrumentScene(satellite=satellite,
@@ -212,4 +216,5 @@ class GenericFactory(object):
             # Pass weak ref to compositor to allow garbage collection
             instrument_scene.image = compositer(
                 weakref.proxy(instrument_scene))
+
         return instrument_scene

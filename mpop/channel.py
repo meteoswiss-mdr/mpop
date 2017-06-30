@@ -35,6 +35,8 @@ import numpy as np
 import logging
 
 LOG = logging.getLogger(__name__)
+#LOG.setLevel(20)
+#CRITICAL 50 #ERROR 40 #WARNING 30 #INFO 20 #DEBUG 10 #NOTSET 0
 
 try:
     from pyorbital.astronomy import sun_zenith_angle as sza
