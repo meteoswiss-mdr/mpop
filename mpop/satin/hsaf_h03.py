@@ -16,13 +16,57 @@ possible accepted formats for this reader are:
   2015-07-23 Ulrich Hamann (MeteoSwiss)
 """
 
-from ConfigParser import ConfigParser
 from mpop import CONFIG_PATH
+from ConfigParser import ConfigParser
 import os
 import numpy.ma as ma
 from glob import glob
 import datetime
 
+def find_hsaf_files(time_slot, fullname):
+
+    # Read config file content
+    conf = ConfigParser()
+    conf.read(os.path.join(CONFIG_PATH, fullname + ".cfg"))
+    values = {
+        "satname": 'MSG',
+        "number": '10',
+        "instrument": 'SEVIRI',
+        "satellite": fullname
+    }
+
+    # HSAF could not decide to take end time 12, 27, 42, 57 or start time 00, 15, 30, 45 or 
+    # so we search for both versions here:
+    for i_format in [0,1]:
+        if i_format==0:
+            # time stamp == end of scan time 12min after start, 12, 27, 42, 57, for most of the cases true
+            end_time = time_slot + datetime.timedelta(minutes=12)
+            filepath    = end_time.strftime(conf.get("seviri-level2", "dir",raw=True))
+            filepattern = end_time.strftime(conf.get("seviri-level2", "filename",raw=True)) % values
+        else:
+            # time stamp == beginning of scan time, for a period between 20170518_0745 and  20170605_1159
+            #### datetime_filename_change1 = datetime.datetime(2017, 5, 18,  7, 43, 0)
+            #### datetime_filename_change2 = datetime.datetime(2017, 6,  5, 11, 59, 0)
+            filepath    = time_slot.strftime(conf.get("seviri-level2", "dir",raw=True))
+            filepattern = time_slot.strftime(conf.get("seviri-level2", "filename",raw=True)) % values
+
+        filename_wildcards = os.path.join( filepath, filepattern)
+        print "... search for file: ", filename_wildcards
+        filenames = glob(str(filename_wildcards))
+        
+        if len(filenames) == 0:
+            print "*** Warning, no HSAF input file found, try to find file with scan start time instead of end time stamp"
+        else:
+            if len(filenames) > 1:
+                print "*** Warning, more than 1 HSAF input data file found"
+                for filename in filenames:
+                    print "    ", filename
+            # found just one (or more) input file, break loop
+            break
+    
+    return filenames
+        
+        
 def load(satscene, **kargs):
     """Reader for EUMETSATs Hydrology SAF (HSAF) h03 product
     h03 product is precipitation rate at the ground 
@@ -30,32 +74,14 @@ def load(satscene, **kargs):
     http://hsaf.meteoam.it/precipitation.php?tab=3
     """
 
-    # Read config file content
-    conf = ConfigParser()
-    conf.read(os.path.join(CONFIG_PATH, satscene.fullname + ".cfg"))
-    values = {"orbit": satscene.orbit,
-    "satname": satscene.satname,
-    "number": satscene.number,
-    "instrument": satscene.instrument_name,
-    "satellite": satscene.fullname
-    }
-
-    # end of scan time 12min after start 
-    end_time = satscene.time_slot + datetime.timedelta(minutes=12)
-
-    filepath    = end_time.strftime(conf.get("seviri-level2", "dir",raw=True))
-    filepattern = end_time.strftime(conf.get("seviri-level2", "filename",raw=True)) % values
-    filename = os.path.join( filepath, filepattern)
-
-    print "... search for file: ", filename
-    filenames=glob(str(filename))
+    filenames = find_hsaf_files(satscene.time_slot, satscene.fullname)
     if len(filenames) == 0:
-        print "*** Error, no file found"
-        quit()
-    elif len(filenames) > 1:
-        print "*** Warning, more than 1 datafile found: "
-        for filename in filenames:
-            print "    ", filename
+        print "*** Error, no HSAF input file found, cannot load."
+        raise IOError("Error, no HSAF input file found, cannot load.")
+    else:
+        if len(filenames) > 1:
+            print "*** Warning, more than 1 HSAF input data file found, choose first one: ", filenames[0]
+        filename = filenames[0]
         
     # possible formats: h03_20150513_1557_rom.grb.gz, h03_20150513_1612_rom.grb, h03_20150513_1612_rom.nc
     fileformats = [filename.split(".")[-1] for filename in filenames]
