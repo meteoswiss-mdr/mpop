@@ -41,14 +41,14 @@ def find_hsaf_files(time_slot, fullname):
         if i_format==0:
             # time stamp == end of scan time 12min after start, 12, 27, 42, 57, for most of the cases true
             end_time = time_slot + datetime.timedelta(minutes=12)
-            filepath    = end_time.strftime(conf.get("seviri-level2", "dir",raw=True))
-            filepattern = end_time.strftime(conf.get("seviri-level2", "filename",raw=True)) % values
+            filepath    = end_time.strftime(conf.get("seviri-level7", "dir",raw=True))
+            filepattern = end_time.strftime(conf.get("seviri-level7", "filename",raw=True)) % values
         else:
             # time stamp == beginning of scan time, for a period between 20170518_0745 and  20170605_1159
             #### datetime_filename_change1 = datetime.datetime(2017, 5, 18,  7, 43, 0)
             #### datetime_filename_change2 = datetime.datetime(2017, 6,  5, 11, 59, 0)
-            filepath    = time_slot.strftime(conf.get("seviri-level2", "dir",raw=True))
-            filepattern = time_slot.strftime(conf.get("seviri-level2", "filename",raw=True)) % values
+            filepath    = time_slot.strftime(conf.get("seviri-level7", "dir",raw=True))
+            filepattern = time_slot.strftime(conf.get("seviri-level7", "filename",raw=True)) % values
 
         filename_wildcards = os.path.join( filepath, filepattern)
         print "... search for file: ", filename_wildcards
@@ -141,14 +141,11 @@ def load(satscene, **kargs):
     aex =      (-2284807.01076965, 2611850.9558437,  3418959.40744847,  5315214.20824482)
 
     from pyresample.geometry import AreaDefinition
-    satscene.area = AreaDefinition("hsaf",
-                                   "hsaf",
-                                   "geos0",
-                                   proj,
-                                   1900,
-                                   900,
-                                   aex)
-
+    hsaf_area = AreaDefinition("hsaf", "hsaf", "geos0", proj, 1900, 900, aex)
+    
+    satscene.area = hsaf_area
+    satscene['h03'].area = hsaf_area
+    
 def read_h03_grib(filename):
 
     try:

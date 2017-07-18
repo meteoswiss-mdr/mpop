@@ -45,7 +45,7 @@ from mpop.channel import Channel, NotLoadedError
 from mpop.utils import OrderedConfigParser
 
 LOG = logging.getLogger(__name__)
-#LOG.setLevel(20)
+LOG.setLevel(40)
 #CRITICAL 50 #ERROR 40 #WARNING 30 #INFO 20 #DEBUG 10 #NOTSET 0
 
 try:
@@ -467,6 +467,7 @@ class SatelliteInstrumentScene(SatelliteScene):
 
         levels.sort()
 
+        # skip level1 -> reserved for compressed HRIT
         if levels[0] == self.instrument_name + "-level1":
             levels = levels[1:]
 
