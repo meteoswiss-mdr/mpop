@@ -23,7 +23,7 @@ units      = {'vza': 'degree',               'vaa': 'degree',                'la
 def load(satscene, **kargs):
     """Load MSG SEVIRI viewing geometry from netCDF file.
     """
-
+    
     # Read config file content
     conf = ConfigParser()
     conf.read(os.path.join(CONFIG_PATH, satscene.fullname + ".cfg"))
@@ -33,7 +33,6 @@ def load(satscene, **kargs):
     "instrument": satscene.instrument_name,
     "satellite": satscene.fullname
     }
-
 
     # get substring between 'lon_0=' and the following space  
     proj4_params = conf.get("satellite", "proj4_params", raw=True)
@@ -62,34 +61,39 @@ def load(satscene, **kargs):
     elif reading_package == "scipy":
         ncfile = netcdf.netcdf_file(filename, 'r')
 
-    for chn_name in satscene.channels_to_load: 
-        # Read variable corresponding to channel name
-        data = ncfile.variables[chn_name][:]   # attention [:,:] or [:] is really necessary
-        #print type(data)                       # it converts 'NetCDFVariable' to 'numpy.ndarray'
-        #print data.ndim
-        #print data.shape
+    # extract string for the area from filename 
+    # !!! BAD: THIS INFORMATION SHOULD BE SAVED IN THE FILE !!!
+    area = filename[filename.rfind("_")+1:filename.rfind(".")]
+    area_def = get_area_def(area)
+    print "... set area to ", area 
+    #satscene.area = area_def
+        
+    for chn_name in satscene.channels_to_load:
+        # only read variables which are in the netCDF file
+        if chn_name in long_names.keys():
+        
+            # Read variable corresponding to channel name
+            data = ncfile.variables[chn_name][:]   # attention [:,:] or [:] is really necessary
+            #print type(data)                       # it converts 'NetCDFVariable' to 'numpy.ndarray'
+            #print data.ndim
+            #print data.shape
 
-        data_m = ma.masked_array(data) # convert numpy array to masked array 
-        data_m.mask = (data == 999.0)  # create mask 
+            data_m = ma.masked_array(data) # convert numpy array to masked array 
+            data_m.mask = (data == 999.0)  # create mask 
 
-        # with this rotation, we can use same indices as we do in the EUMETSAT order mask 
-        # data_m.mask[3221:3371, 1712:2060] = 1
+            # with this rotation, we can use same indices as we do in the EUMETSAT order mask 
+            # data_m.mask[3221:3371, 1712:2060] = 1
 
-        #import matplotlib.pyplot as plt
-        #plt.imshow(data_m)
-        #plt.colorbar()
-        #plt.show()
+            #import matplotlib.pyplot as plt
+            #plt.imshow(data_m)
+            #plt.colorbar()
+            #plt.show()
 
-        satscene[chn_name] = flipud(data_m)   # flip upside-down 
-        satscene[chn_name].fill_value = 999.0
-        satscene[chn_name].info['units'] = units[chn_name]
-        satscene[chn_name].long_name  = long_names[chn_name]
+            satscene[chn_name] = flipud(data_m)   # flip upside-down 
+            satscene[chn_name].fill_value = 999.0
+            satscene[chn_name].info['units'] = units[chn_name]
+            satscene[chn_name].long_name  = long_names[chn_name]
+            satscene[chn_name].area = area_def
 
     # close the file.
     ncfile.close()        
-
-    # extract string for the area from filename 
-    area = filename[filename.rfind("_")+1:filename.rfind(".")]
-    print "... set area to ", area 
-    # !!! BAD: THIS INFORMATION SHOULD BE SAVED IN THE FILE !!!
-    satscene.area = get_area_def(area)
