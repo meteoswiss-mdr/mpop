@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2012, 2013, 2014 Martin Raspaud
+# Copyright (c) 2012-2017 Pytroll
 
 # Author(s):
 
 #   Martin Raspaud <martin.raspaud@smhi.se>
+#   Adam Dybbroe <adam.dybbroe@smhi.se>
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,6 +22,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Reader for eps level 1b data. Uses xml files as a format description.
+See:
+http://www.eumetsat.int/website/wcm/idc/idcplg?IdcService=GET_FILE&dDocName=PDF_TEN_97231-EPS-AVHRR&RevisionSelectionMethod=LatestReleased&Rendition=Web
+and
+http://www.eumetsat.int/website/wcm/idc/idcplg?IdcService=GET_FILE&dDocName=PDF_TEN_990004-EPS-AVHRR1-PGS&RevisionSelectionMethod=LatestReleased&Rendition=Web
 """
 
 import glob
@@ -90,7 +95,7 @@ def read_raw(filename):
             if not grh:
                 break
             try:
-                rec_class = record_class[grh["record_class"]]
+                rec_class = record_class[grh["record_class"][0]]
                 sub_class = grh["RECORD_SUBCLASS"][0]
                 record = np.fromfile(fdes,
                                      form.dtype((rec_class,
@@ -98,7 +103,7 @@ def read_raw(filename):
                                      1)
                 records.append((rec_class, record, sub_class))
             except KeyError:
-                fdes.seek(grh["RECORD_SIZE"] - 20, 1)
+                fdes.seek(grh["RECORD_SIZE"][0] - 20, 1)
 
     return records, form
 
@@ -255,7 +260,7 @@ class EpsAvhrrL1bReader(object):
                 if calib_type == 1:
                     chans[chan] = np.ma.array(
                         to_refl(self["SCENE_RADIANCES"][:, 2, :],
-                                self["CH2_SOLAR_FILTERED_IRRADIANCE"]))
+                                self["CH3A_SOLAR_FILTERED_IRRADIANCE"]))
                 else:
                     chans[chan] = np.ma.array(self["SCENE_RADIANCES"][:, 2, :])
 
@@ -454,7 +459,6 @@ def load(scene, *args, **kwargs):
     loaded_channels = set()
 
     for reader in readers:
-
         for chname, arr in reader.get_channels(scene.channels_to_load,
                                                calibrate).items():
             arrs.setdefault(chname, []).append(arr)
@@ -468,7 +472,7 @@ def load(scene, *args, **kwargs):
         llats.append(lats)
 
     for chname in loaded_channels:
-        scene[chname] = np.vstack(arrs[chname])
+        scene[chname] = np.ma.vstack(arrs[chname])
         if chname in ["1", "2", "3A"]:
             scene[chname].info["units"] = "%"
         elif chname in ["4", "5", "3B"]:
