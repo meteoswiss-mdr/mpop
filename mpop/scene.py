@@ -450,7 +450,7 @@ class SatelliteInstrumentScene(SatelliteScene):
         else:
             for chn in loaded_channels:
                 self.channels_to_load -= set([chn])
-
+                
         # find the plugin to use from the config file
         conf = ConfigParser.ConfigParser()
         try:
@@ -586,7 +586,7 @@ class SatelliteInstrumentScene(SatelliteScene):
 
         return self.orbital
 
-    def estimate_cth(self, cth_atm="best", time_slot=None):
+    def estimate_cth(self, cth_atm="best", time_slot=None, IR_108=None):
         """
         General purpose
         ===============
@@ -600,28 +600,43 @@ class SatelliteInstrumentScene(SatelliteScene):
         Example call
         ============
            data.estimate_cth(cth_atm="best")
+
         input arguments
         ===============
           cth_atm    * using temperature profile to estimate the cloud top height
                        possible choices are (see estimate_cth in mpop/tools.py):
                        "standard", "tropics", "midlatitude summer", "midlatitude winter", "subarctic summer", "subarctic winter"
                        this will choose the corresponding atmospheric AFGL temperature profile
-                     * new choice: "best" -> choose according to central (lon,lat) and time from:
+                     * new choice: "best" -> choose according to central (lon,lat) and time_slot from:
                        "tropics", "midlatitude summer", "midlatitude winter", "subarctic summer", "subarctic winter"
-          time_slot  current observation time as (datetime.datetime() object)
-                     time_slot option can be omitted, the function tries to use self.time_slot
+          time_slot  * current observation time as (datetime.datetime() object)
+                       used for choosing most represenative standard temperature profile 
+                       time_slot option can be omitted, the function tries to use self.time_slot
+          IR_108     * explicit IR_108 channel, 
+                       handy, if IR_108 is not loaded into the same satellite scene object 
+                       (e.g. because it comes from another satellite)
         """
 
         print "*** Simple estimation of Cloud Top Height with IR_108 channel"
 
         # check if IR_108 is loaded
-        loaded_channels = [chn.name for chn in self.loaded_channels()]
-        if "IR_108" not in loaded_channels:
-            print "*** Error in estimate_cth (mpop/scene.py)"
-            print "    IR_108 is required to estimate CTH, but not loaded"
-            quit()
+
+        if IR_108 is not None:
+            if isinstance(IR_108, mpop.channel.Channel):
+                ir108 = IR_108.data
+            else:
+                print "*** Error in estimate_cth (mpop.scene.py)"
+                print "    given IR_108 is not of the type mpop.channel.Channel"
+                quit()
         else:
-            ir108 = self["IR_108"].data
+            loaded_channels = [chn.name for chn in self.loaded_channels()]
+            if "IR_108" in loaded_channels:
+                IR_108 = self["IR_108"]
+                ir108 = self["IR_108"].data
+            else:
+                print "*** Error in estimate_cth (mpop/scene.py)"
+                print "    IR_108 is required to estimate CTH, but not loaded"
+                quit()
 
         # choose atmosphere
         if cth_atm.lower() == "best":
@@ -677,16 +692,16 @@ class SatelliteInstrumentScene(SatelliteScene):
                                      calibration_unit="m"))
 
         # copy additional information from IR_108
-        self["CTH"].info = self["IR_108"].info
+        self["CTH"].info = IR_108.info
         self["CTH"].info['units'] = 'm'
-        self["CTH"].area = self["IR_108"].area
-        self["CTH"].area_id = self["IR_108"].area_id
-        self["CTH"].area_def = self["IR_108"].area_def
-        self["CTH"].resolution = self["IR_108"].resolution
+        self["CTH"].area = IR_108.area
+        self["CTH"].area_id = IR_108.area_id
+        self["CTH"].area_def = IR_108.area_def
+        self["CTH"].resolution = IR_108.resolution
 
         return cth
 
-    def parallax_corr(self, fill="False", estimate_cth=False, cth=None, cth_atm='best', replace=False):
+    def parallax_corr(self, fill="False", estimate_cth=False, cth=None, IR_108=None, cth_atm='best', time_slot=None, replace=False):
         """
         General purpose
         ===============
@@ -708,6 +723,8 @@ class SatelliteInstrumentScene(SatelliteScene):
                           has to be in exactly same projection as all loaded channels
           cth_atm       * using temperature profile to estimate the cloud top height
                           see estimate_cth
+          time_slot     * auxilary information to choose the most representative 
+                          standard temperature profile
           replace       * boolean: if true, data inside channel object is replaced
                           if false, new channel created, e.g. "IR_108" -> "IR_108_PC"
         """
@@ -733,6 +750,10 @@ class SatelliteInstrumentScene(SatelliteScene):
                     # make a copy of CTH, as it might get replace by its parallax
                     # corrected version
                     cth = copy.deepcopy(self["CTTH"].height)
+                elif "CTH" in loaded_channels:
+                    # make a copy of CTH, as it might get replace by its parallax
+                    # corrected version
+                    cth = copy.deepcopy(self["CTH"].data)
                 else:
                     print "*** Error in parallax_corr (mpop.scene.py)"
                     print "    parallax correction needs some cloud top height information"
@@ -740,30 +761,38 @@ class SatelliteInstrumentScene(SatelliteScene):
                     print "    activate the option data.parallax_corr( estimate_cth=True )"
                     quit()
             else:
-                # check if cth has the same size as channels
+                # check if cth (given as argument to this function) has the same size as all loaded channels
                 for chn in self.loaded_channels():
                     if isinstance(chn, mpop.channel.Channel):
-                        print type(chn)
+                        #print type(chn)
                         if not chn.data.shape==cth.shape:
                             raise ValueError("The shape of the channels and the cth must agree.")
  
         else:
-            if "IR_108" in loaded_channels:
-                # try to estimate CTH with IR_108
-                self.estimate_cth(cth_atm=cth_atm)
-                cth = self["CTH"].data
+            if IR_108 is not None:
+                # estimate CTH with explicit IR_108
+                print "*** Warning, it is not recommended to use IR_108 observations from another platform"
+                print "    the IR_108 (with parallax shift) might represent a neighbouring cloud, if viewing geometry differs"
+                self.estimate_cth(cth_atm=cth_atm, time_slot=time_slot, IR_108=IR_108)
             else:
-                print "*** Error in parallax_corr (mpop.scene.py)"
-                print "    parallax correction needs some cloud top height information"
-                print "    you specified the estimation of CTH with the IR_108, but "
-                print "    this channel is not loaded"
-                quit()
-
+                if "IR_108" in loaded_channels:
+                    # estimate CTH with IR_108 that is included in self
+                    self.estimate_cth(cth_atm=cth_atm, time_slot=time_slot)
+                else:
+                    print "*** Error in parallax_corr (mpop.scene.py)"
+                    print "    parallax correction needs some cloud top height information."
+                    print "    You specified the estimation of CTH with the IR_108, "
+                    print "    but IR_108 channel is not loaded"
+                    quit()
+                    
+            # copy cloud top height data
+            cth = self["CTH"].data
+        
         # perform parallax correction for each loaded channel
         for chn in self.loaded_channels():
             if isinstance(chn, mpop.channel.Channel):
                 if hasattr(chn, 'parallax_corr'):
-                    print "... perform parallax correction for ", chn.name
+                    print "... perform parallax correction for \'"+ chn.name+"\'" #, chn.area
                     if replace:
                         chn_name_PC = chn.name
                         print "    replace channel ", chn_name_PC
@@ -772,8 +801,7 @@ class SatelliteInstrumentScene(SatelliteScene):
                         print "    create channel ", chn_name_PC
 
                     # take care of the parallax correction
-                    self[chn_name_PC] = chn.parallax_corr(
-                        cth=cth, azi=azi, ele=ele, fill=fill)
+                    self[chn_name_PC] = chn.parallax_corr(cth=cth, azi=azi, ele=ele, fill=fill)
                 else:
                     LOG.warning("Channel " + str(chn.name) + " has no attribute parallax_corr,"
                                 "thus parallax effect wont be corrected.")
