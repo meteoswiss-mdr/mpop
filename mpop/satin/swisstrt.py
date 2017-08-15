@@ -13,8 +13,8 @@ import datetime
 from time import gmtime
 
 import logging
-#LOG = logging(__name__)
-
+LOG = logging.getLogger(__name__)
+LOG.setLevel(30)
 
 
 def load(satscene, *args, **kwargs):

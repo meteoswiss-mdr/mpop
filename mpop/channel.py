@@ -152,7 +152,8 @@ class Channel(GenericChannel):
                  resolution=0,
                  wavelength_range=[-np.inf, -np.inf, -np.inf],
                  data=None,
-                 calibration_unit=None):
+                 calibration_unit=None,
+                 area=None):
 
         GenericChannel.__init__(self, name)
 
@@ -182,6 +183,11 @@ class Channel(GenericChannel):
         self.wavelength_range = list(wavelength_range)
         self.unit = calibration_unit
         self.data = data
+
+        if area is not None:
+            self.area = area
+            from mpop.projector import get_area_def
+            self.area_def = get_area_def(area)
 
     def get_reflectance(self, tb11, sun_zenith=None, tb13_4=None):
         """Get the reflectance part of an NIR channel"""

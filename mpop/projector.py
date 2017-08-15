@@ -262,6 +262,7 @@ class Projector(object):
 
     def _project_array_ewa(self, data):
         """Project array *data* using EWA interpolation"""
+        # elliptical weighted average
         # TODO: should be user configurable?
         rows_per_scan = None
 

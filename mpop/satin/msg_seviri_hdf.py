@@ -53,6 +53,7 @@ def load(satscene, calibrate=True, area_extent=None, **kwargs):
 
     # Read config file content
     conf = ConfigParser()
+    print "    read config file: ", os.path.join(CONFIG_PATH, satscene.fullname + ".cfg")
     conf.read(os.path.join(CONFIG_PATH, satscene.fullname + ".cfg"))
     values = {"orbit": satscene.orbit,
     "satname": satscene.satname,
@@ -96,8 +97,8 @@ def load(satscene, calibrate=True, area_extent=None, **kwargs):
     # end of scan time 4 min after start 
     end_time = satscene.time_slot + datetime.timedelta(minutes=dt_end)
 
-    filename_pattern = os.path.join( end_time.strftime(conf.get(reader_level, "dir", raw=True)),
-                              end_time.strftime(conf.get(reader_level, "filename", raw=True)) % values )
+    filename_pattern = os.path.join( end_time.strftime(conf.get(reader_level, "dir",      raw=True)),
+                                     end_time.strftime(conf.get(reader_level, "filename", raw=True)) % values )
 
     print "... search for file: ", filename_pattern
     filenames=glob(str(filename_pattern))

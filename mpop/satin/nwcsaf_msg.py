@@ -44,6 +44,8 @@ from mpop.projector import get_area_def
 from os.path import basename
 
 LOG = get_logger('satin/nwcsaf_msg')
+LOG.setLevel(30)  #CRITICAL 50 #ERROR 40 #WARNING 30 #INFO 20 #DEBUG 10 #NOTSET 0
+
 COMPRESS_LVL = 6
 
 

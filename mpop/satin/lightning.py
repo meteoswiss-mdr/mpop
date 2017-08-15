@@ -84,9 +84,15 @@ def load(satscene, *args, **kwargs):
         print "... dt specified by configuration file:", dt
     print "... read the observation of the last ", dt, " min"
 
+
     # Load data from txt file 
-    print "... read data from", str(filename)
-    if len(glob.glob(str(filename))) == 0:
+    print "... read data from", str(filename), os.path.dirname(filename)
+
+    if not os.path.isdir(os.path.dirname(filename)):
+        print '*** ERROR, lightning input directory '+str(os.path.dirname(filename))+' cannot be accessed'
+        print '    please check the config file'
+        quit()
+    elif len(glob.glob(str(filename))) == 0:
         "*** WARNING, no file "+str(filename)+" found!"
         filename=""
     elif len(glob.glob(str(filename))) > 1:
@@ -163,13 +169,6 @@ def readLightning(file, NEAR_REAL_TIME, time_slot, dt=5, area='ccs4'):
     curr_abs = ma.asarray(zeros(shape=(ni,nj)))
     curr_neg = ma.asarray(zeros(shape=(ni,nj)))
     curr_pos = ma.asarray(zeros(shape=(ni,nj)))
-
-    dirname = os.path.dirname(file)
-    if ~ os.path.isdir(dirname):
-        print '*** ERROR, lightning input directory cannot be accessed'
-        print '    please check the config file'
-        quit()
-      
 
     # read data from file
     if file != "" and stat(file).st_size != 0:
