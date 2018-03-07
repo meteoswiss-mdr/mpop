@@ -693,10 +693,12 @@ class Channel(GenericChannel):
         # Create the new channel (by copying) and initialize the data with None values
         new_ch = copy.deepcopy(self)
 
-        if isinstance(new_ch.data.data[0,0],np.uint8):
+        #if isinstance(new_ch.data.data[0,0],np.uint8):
+        if new_ch.data.dtype == np.uint8:
             new_ch.data=new_ch.data.astype(float)
             inttofloat = True
             
+        # initialize every value with Not a Number
         new_ch.data[:,:] = np.nan
 
         # Set the name
@@ -730,7 +732,7 @@ class Channel(GenericChannel):
         # copy cloudy pixel with new position modified with parallax shift
         ind = np.where(x_pc.mask == False)
         new_ch.data[x_pc[ind], y_pc[ind]] = self.data[x[ind], y[ind]]
-
+        
         # Mask out data gaps (areas behind the clouds)
         new_ch.data = np.ma.masked_where(
             np.isnan(new_ch.data), new_ch.data, copy=False)

@@ -571,15 +571,29 @@ def write(image_data, output_fn, area_def, product_name=None, **kwargs):
     options['meridian_west'] = upper_left[0]
     options['meridian_east'] = lower_right[0]
     if kwargs['projection'].endswith("POL"):
-        if 'lat_ts' in area_def.proj_dict:
-            options['ref_lat1'] = area_def.proj_dict['lat_ts']
+        #if 'lat_ts' in area_def.proj_dict:
+        #    options['ref_lat1'] = area_def.proj_dict['lat_ts']
+        if 'lat_1' in area_def.proj_dict:
+            options['ref_lat1'] = area_def.proj_dict['lat_1']
+        else:
+            options['ref_lat1'] = 0
+        if 'lat_2' in area_def.proj_dict:
+            options['ref_lat2'] = area_def.proj_dict['lat_2']
+        else:
             options['ref_lat2'] = 0
     else:
         if 'lat_0' in area_def.proj_dict:
             options['ref_lat1'] = area_def.proj_dict['lat_0']
-            options['ref_lat2'] = 0
+            if 'lat_1' in area_def.proj_dict:
+                options['ref_lat2'] = area_def.proj_dict['lat_1']
+            else:
+                options['ref_lat2'] = 0
     if 'lon_0' in area_def.proj_dict:
         options['central_meridian'] = area_def.proj_dict['lon_0']
+    #if 'lon_1' in area_def.proj_dict:
+    #    options['central_meridian'] = area_def.proj_dict['lon_1']
+    #if 'lon_2' in area_def.proj_dict:
+    #    options['central_meridian'] = area_def.proj_dict['lon_2']
     if 'a' in area_def.proj_dict:
         options['radius_a'] = area_def.proj_dict['a']
     if 'b' in area_def.proj_dict:
@@ -589,6 +603,8 @@ def write(image_data, output_fn, area_def, product_name=None, **kwargs):
     options['min_gray_val'] = image_data.min()
     options['max_gray_val'] = image_data.max()
     options.update(kwargs)  # Update/overwrite with passed arguments
+
+    print (options)
 
     _write(image_data, output_fn, write_rgb=write_rgb, **options)
 
