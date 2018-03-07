@@ -59,7 +59,7 @@ class CFScene(object):
     with the *scene* to transform as argument.
     """
 
-    def __init__(self, scene, dtype=np.int16, band_axis=2,
+    def __init__(self, scene, dtype=np.int16, band_axis=2, concatenate_bands=True,
                  area_aggregation=True,
                  time_dimension=False):
         if not issubclass(dtype, np.integer):
@@ -148,7 +148,10 @@ class CFScene(object):
             if time_dimension:
                 data = np.ma.expand_dims(data, time_axis)
             elif area_aggregation:
-                data = np.ma.expand_dims(data, band_axis)
+                if band_axis > 0:
+                    data = np.ma.expand_dims(data, band_axis)
+                else:
+                    band_axis=2
 
             # it's a grid mapping
             try:
@@ -184,7 +187,10 @@ class CFScene(object):
                     area_counter += 1
                     x__ = InfoObject()
                     chn.area.get_proj_coords(cache=True)
-                    x__.data = chn.area.projection_x_coords[0, :]
+                    if ( len(chn.area.projection_x_coords.shape) == 1 ):
+                    	x__.data = chn.area.projection_x_coords
+                    else:
+                        x__.data = chn.area.projection_x_coords[0, :]
                     x__.info = {"var_name": "x" + str_arc,
                                 "var_data": x__.data,
                                 "var_dim_names": ("x" + str_arc,),
@@ -205,7 +211,10 @@ class CFScene(object):
                     setattr(self, x__.info["var_name"], x__)
 
                     y__ = InfoObject()
-                    y__.data = chn.area.projection_y_coords[:, 0]
+                    if ( len(chn.area.projection_y_coords.shape) == 1 ):
+                    	y__.data = chn.area.projection_y_coords
+                    else:
+                        y__.data = chn.area.projection_y_coords[:, 0]
                     y__.info = {"var_name": "y" + str_arc,
                                 "var_data": y__.data,
                                 "var_dim_names": ("y" + str_arc,),
@@ -277,7 +286,7 @@ class CFScene(object):
                 xy_names = ["y" + str_arc, "x" + str_arc]
 
             if (area_aggregation and not time_dimension and
-                    (chn.area, chn.info['units']) in area_units):
+                    (chn.area, chn.info['units']) in area_units and concatenate_bands):
 
                 str_cnt = str(area_units.index((chn.area, chn.info['units'])))
                 # area has been used before
@@ -332,7 +341,15 @@ class CFScene(object):
                 elif area_aggregation:
                     dim_names.insert(band_axis, 'band' + str_cnt)
 
-                band.info = {"var_name": "Image" + str_cnt,
+                if concatenate_bands:
+                    image_name ="Image"+str_cnt
+                    wl_name = "wl_bnds"+str_cnt
+                else:
+                    image_name = chn.name
+                    wl_name = "wl_"+chn.name
+
+                #band.info = {"var_name": "Image" + str_cnt,  ## why? Ulrich Hamann
+                band.info = {"var_name": image_name,
                              "var_data": band.data,
                              'var_dim_names': dim_names,
                              "_FillValue": fill_value,
@@ -363,7 +380,8 @@ class CFScene(object):
                 wlbnds = InfoObject()
                 wlbnds.data = np.array([[chn.wavelength_range[0],
                                          chn.wavelength_range[2]]])
-                wlbnds.info = {"var_name": "wl_bnds" + str_cnt,
+                #wlbnds.info = {"var_name": "wl_bnds" + str_cnt,  # why? # Ulrich Hamann 
+                wlbnds.info = {"var_name": wl_name,
                                "var_data": wlbnds.data,
                                "var_dim_names": ("band" + str_cnt, "nv")}
                 setattr(self, wlbnds.info["var_name"], wlbnds)
@@ -422,6 +440,7 @@ def proj2cf(proj_dict):
              "aea": aea2cf,
              "laea": laea2cf,
              "ob_tran": obtran2cf,
+             "somerc": somerc2cf,
              "eqc": eqc2cf, }
 
     return cases[proj_dict["proj"]](proj_dict)
@@ -454,6 +473,24 @@ def eqc2cf(proj_dict):
             "false_northing": eval(proj_dict.get("y_0", "0"))
             }
 
+def somerc2cf(proj_dict):
+    """Return the cf grid mapping from a Swiss Oblique MERCator (somerc) projection proj dict,
+    see ftp://ftp.remotesensing.org/proj/swiss.pdf
+    """
+
+    new_dict = {}
+    new_dict["grid_mapping_name"] = "swiss_oblique_mercator"
+    new_dict["latitude_of_projection_origin"]  = eval(proj_dict["lat_0"])
+    new_dict["longitude_of_projection_origin"] = eval(proj_dict["lon_0"])
+    new_dict["ellipsoid"]                      = proj_dict["ellps"]
+    if "x_0" in proj_dict:
+        new_dict["false_easting"] = eval(proj_dict.get("x_0", "0"))
+    if "y_0" in proj_dict:
+        new_dict["false_northing"] = eval(proj_dict.get("y_0", "0"))
+    if "k_0" in proj_dict:
+        new_dict["scale_factor_at_projection_origin"] = eval(proj_dict.get("k_0", "1.0"))
+            
+    return new_dict
 
 def stere2cf(proj_dict):
     """Return the cf grid mapping from a stereographic proj dict.

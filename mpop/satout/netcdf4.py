@@ -35,8 +35,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def save(scene, filename, compression=True, dtype=np.int16, band_axis=2,
-         area_aggregation=True, time_dimension=False):
+def save(scene, filename, compression=True, dtype=np.int16, band_axis=2, concatenate_bands=True,
+         area_aggregation=True, time_dimension=False, mode='w'):
     """Saves the scene as a NetCDF4 file, with CF conventions.
 
     *band_axis* gives which axis to use for the band dimension. For
@@ -56,9 +56,9 @@ def save(scene, filename, compression=True, dtype=np.int16, band_axis=2,
 
     scene.add_to_history("Saved as netcdf4/cf by pytroll/mpop.")
     return netcdf_cf_writer(filename,
-                            CFScene(scene, dtype, band_axis, area_aggregation,
-                                    time_dimension),
-                            compression=compression)
+                            CFScene(scene, dtype, band_axis, concatenate_bands=concatenate_bands,
+                                    area_aggregation=area_aggregation, time_dimension=time_dimension),
+                            compression=compression, mode=mode)
 
 
 class WriterDimensionError(Exception):
@@ -181,11 +181,11 @@ def shape(element):
         return ()
 
 
-def netcdf_cf_writer(filename, root_object, compression=True):
+def netcdf_cf_writer(filename, root_object, compression=True, mode='w'):
     """ Write data to file to netcdf file. """
     from netCDF4 import Dataset
 
-    rootgrp = Dataset(filename, 'w')
+    rootgrp = Dataset(filename, mode)
     try:
         info_list = []
         variable_dispenser(root_object, info_list)
@@ -230,7 +230,7 @@ def netcdf_cf_writer(filename, root_object, compression=True):
         # create variables
 
         var_names = find_tag(info_list, 'var_name')
-
+        
         nc_vars = []
 
         fill_value_dict = find_FillValue_tags(info_list)
