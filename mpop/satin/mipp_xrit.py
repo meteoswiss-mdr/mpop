@@ -43,7 +43,7 @@ from mpop.plugin_base import Reader
 from mpop.satin.helper_functions import area_def_names_to_extent
 
 LOGGER = logging.getLogger(__name__)
-LOGGER.setLevel(40)
+LOGGER.setLevel(10)
 
 try:
     # Work around for on demand import of pyresample. pyresample depends
