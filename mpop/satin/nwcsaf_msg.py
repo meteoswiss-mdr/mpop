@@ -3077,7 +3077,7 @@ def load(scene, **kwargs):
         if len(filename) > 12:
             sat_nr= int(basename(filename)[10:11])+7
             if int(scene.sat_nr()) != int(sat_nr):
-                print "*** Warning, change Meteosat number to "+str(sat_nr)+" (input: "+scene.sat_nr()+")"
+                print "*** Warning, change Meteosat number to "+str(sat_nr)+" (input: "+str(scene.sat_nr())+")"
                 #scene.number = str(sat_nr).zfill(2)
                 # !!! update number !!!
                 scene.number = str(sat_nr)
