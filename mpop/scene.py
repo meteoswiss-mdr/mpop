@@ -576,13 +576,13 @@ class SatelliteInstrumentScene(SatelliteScene):
         """
         return set([chan for chan in self.channels if chan.is_loaded()])
 
-    def get_orbital(self):
+    def get_orbital(self, allow_NEAR_NORM=False):
         from pyorbital.orbital import Orbital
         from pyorbital import tlefile
 
         from pyorbital.tlefile import get_norad_line
         sat_line = get_norad_line(self.satname, self.number)
-        self.orbital = Orbital(sat_line)
+        self.orbital = Orbital(sat_line, allow_NEAR_NORM=allow_NEAR_NORM)
 
         return self.orbital
 
@@ -740,7 +740,7 @@ class SatelliteInstrumentScene(SatelliteScene):
                 # calculate the viewing geometry of the SEVIRI sensor
                 print "... calculate viewing geometry using ", chn.name
                 (azi, ele) = chn.get_viewing_geometry(
-                    self.get_orbital(), self.time_slot)
+                    self.get_orbital(allow_NEAR_NORM=True), self.time_slot)
                 break
 
         # choose best way to get CTH for parallax correction
