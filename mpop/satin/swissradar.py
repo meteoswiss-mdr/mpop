@@ -51,13 +51,12 @@ def load(satscene, *args, **kwargs):
                 units = conf.get(radar_product, "units").replace("'", "").replace('"', '')
                 break
 
-
         filename = os.path.join(
             satscene.time_slot.strftime(conf.get("radar-level2", "dir", raw=True)) % values,
             satscene.time_slot.strftime(conf.get("radar-level2", "filename", raw=True)) % values)
 
-        # Load data from the gif file
-        #filename = "/home/lom/users/cll/pytroll/radar/RZC143081530F2.801.gif"
+        # Load data from file
+        # filename = "/home/lom/users/cll/pytroll/radar/RZC143081530F2.801.gif"
         # EZC151280555F2.815.gif  EZC151280555F2.820.gif  EZC151280555F2.845.gif  EZC151280555F2.850.gif
 
         # specify dBZ threshold for ECHO TOP
@@ -73,29 +72,46 @@ def load(satscene, *args, **kwargs):
         elif len(filenames) > 1:
             print "*** Warning, more than 1 datafile found: ", filenames 
         filename = filenames[0]
+
         print("... read data from %s" % str(filename))								 
-        im = Image.open(str(filename))
-        #im.show()
+        
+        # determine the format, read data accordingly 
+        from os.path import splitext
+        file_name,extension = splitext(filename)
 
-        #print 'Format (swissradar.py): ' + im.format
-        #print 'Size (swissradar.py): ' + str(im.size)
-        #print 'Mode (swissradar.py): ' + str(im.mode)
+        if extension=='.gif':
+            im = Image.open(str(filename))
+            #im.show()
 
-        radar_data = convertToValue(im, scale)
-        #imo = Image.fromarray(radar_data.clip(0,255).astype("uint8"))
-        #imo.save('test.png')
+            #print 'Format (swissradar.py): ' + im.format
+            #print 'Size (swissradar.py): ' + str(im.size)
+            #print 'Mode (swissradar.py): ' + str(im.mode)
 
-        print 'swissradar.py (min/max):', radar_data.min(), radar_data.max()
+            radar_data = convertToValue(im, scale)
+            #imo = Image.fromarray(radar_data.clip(0,255).astype("uint8"))
+            #imo.save('test.png')
 
-        radar_data_masked = np.ma.asarray(radar_data)
-        # RZC
-        #radar_data_masked.mask = (radar_data_masked == 9999.9) | (radar_data_masked <= 0.0001) 
-        # VIL
-        #radar_data_masked.mask = (radar_data_masked >= 9999.0) | (radar_data_masked <= 0.5) 
-        # CZC
-        radar_data_masked.mask = (radar_data_masked >= 9999.0) | (radar_data_masked <= 0.5)
+            print 'gif-reader: swissradar.py (min/max):', radar_data.min(), radar_data.max()
 
-        print 'swissradar.py (min/max):', radar_data.min(), radar_data.max()
+            radar_data_masked = np.ma.asarray(radar_data)
+            # RZC
+            #radar_data_masked.mask = (radar_data_masked == 9999.9) | (radar_data_masked <= 0.0001) 
+            # VIL
+            #radar_data_masked.mask = (radar_data_masked >= 9999.0) | (radar_data_masked <= 0.5) 
+            # CZC
+            radar_data_masked.mask = (radar_data_masked >= 9999.0) | (radar_data_masked <= 0.5)
+        else:
+            import sys
+            sys.path.insert(0, '/opt/users/hau/PyTroll/packages/mpop/mpop/satin/metranet')
+            import metranet
+            ret = metranet.read_file(str(filename), physic_value=True)
+            print 'metranet: swissradar.py (min/max):', ret.data.min(), ret.data.max()
+            
+            from numpy.ma import masked_invalid, masked_where
+            radar_data_masked=masked_invalid(ret.data)
+            radar_data_masked=masked_where(radar_data_masked==0,radar_data_masked)
+    
+        print 'swissradar.py (min/max):', radar_data_masked.min(), radar_data_masked.max()
 
         # save data in satscene class according to channel name
         satscene[chn_name] = radar_data_masked
@@ -104,7 +120,8 @@ def load(satscene, *args, **kwargs):
         satscene[chn_name].product_name = values["product"]
 
         # save projection / area 
-        satscene.area = pyresample.utils.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
+        #satscene.area = pyresample.utils.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
+        satscene[chn_name].area = pyresample.utils.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
 
         # save units
         satscene[chn_name].units = units
@@ -114,10 +131,10 @@ def convertToValue(im, scale):
     #r, g, b = rgb_im.getpixel((1, 1))
     #print r, g, b
    
-    rainscale = np.loadtxt(scale, skiprows=1)
-    #print "Rainscale: "
-    #print rainscale
-    translate = dict(zip(zip(rainscale[:, 1], rainscale[:,2], rainscale[:,3]), rainscale[:,-1]))
+    colorscale = np.loadtxt(scale, skiprows=1)
+    #print "Colorscale: "
+    #print colorscale
+    translate = dict(zip(zip(colorscale[:, 1], colorscale[:,2], colorscale[:,3]), colorscale[:,-1]))
 
     #translate.get(rgb_im.getdata()[100], 500)  # 500 is the null value, in case the value is not found in the dictionary
     rain = np.zeros(len(rgb_im.getdata()))

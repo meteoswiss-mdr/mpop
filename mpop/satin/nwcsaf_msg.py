@@ -2940,6 +2940,7 @@ def load(scene, **kwargs):
                     % {"number": "01",
                        "product": "CMa__"})
         filename = get_best_product(filename_wildcards, area_extent)
+        print "    read data from: ", filename
         if filename != None:
             ct_chan = MsgCloudMask() 
             ct_chan.read(filename,calibrate)
@@ -2958,6 +2959,7 @@ def load(scene, **kwargs):
         else:
             LOG.info("Did not find any MSG file for specified area")
             return
+        print "    read data from: ", filename
         ct_chan = MsgCloudType()
         ct_chan.read(filenames[-1])
         LOG.debug("Uncorrected file: %s", filename)
@@ -2977,6 +2979,7 @@ def load(scene, **kwargs):
         else:
             LOG.info("Did not find any MSG file for specified area")
             return
+        print "    read data from: ", filename
         ct_chan_plax = MsgCloudType()
         if filename != None:
             LOG.debug("Parallax corrected file: %s", filename)
@@ -2992,13 +2995,14 @@ def load(scene, **kwargs):
                     % {"number": "03",
                        "product": "CTTH_"})
         filename = get_best_product(filename_wildcards, area_extent)
+        print "    read data from: ", filename
         if filename != None:
             ct_chan = MsgCTTH()
             ct_chan.read(filename,calibrate)
-            print "CCC", scene.sat_nr()
+            #print "CCC", scene.sat_nr()
             ct_chan.satid = (scene.satname[0:8].capitalize() +
                              str(scene.sat_nr()).rjust(2))
-            print "bullshit (nwcsat_msg.py) ", ct_chan.satid   # "Meteosat 9"
+            #print "bullshit (nwcsat_msg.py) ", ct_chan.satid   # "Meteosat 9"
             ct_chan.resolution = ct_chan.area.pixel_size_x
             scene.channels.append(ct_chan)
         
@@ -3007,6 +3011,7 @@ def load(scene, **kwargs):
                     % {"number": "05",
                        "product": "CRR__"})
         filename = get_best_product(filename_wildcards, area_extent)
+        print "    read data from: ", filename
         if filename != None:
             ct_chan = MsgCRR()
             ct_chan.read(filename,calibrate)
@@ -3021,6 +3026,7 @@ def load(scene, **kwargs):
                     % {"number": "04",
                        "product": "PC___"})
         filename = get_best_product(filename_wildcards, area_extent)
+        print "    read data from: ", filename
         if filename != None:
             ct_chan = MsgPC()
             ct_chan.read(filename,calibrate)
@@ -3035,6 +3041,7 @@ def load(scene, **kwargs):
                     % {"number": "13",
                        "product": "SPhR_"})
         filename = get_best_product(filename_wildcards, area_extent)
+        print "    read data from: ", filename
         if filename != None:
             ct_chan = MsgSPhR()
             ct_chan.read(filename,calibrate)
@@ -3049,6 +3056,7 @@ def load(scene, **kwargs):
                     % {"number": "14",
                        "product": "PCPh_"})
         filename = get_best_product(filename_wildcards, area_extent)
+        print "    read data from: ", filename
         if filename != None:
             ct_chan = MsgPCPh()
             ct_chan.read(filename,calibrate)
@@ -3063,6 +3071,7 @@ def load(scene, **kwargs):
                     % {"number": "14",
                        "product": "CRPh_"})
         filename = get_best_product(filename_wildcards, area_extent)
+        print "    read data from: ", filename
         if filename != None:
             ct_chan = MsgCRPh()
             ct_chan.read(filename,calibrate)
@@ -3076,8 +3085,10 @@ def load(scene, **kwargs):
         print "nwcsaf_msg", len(filename), filename
         if len(filename) > 12:
             sat_nr= int(basename(filename)[10:11])+7
+            print int(scene.sat_nr())
+            print int(sat_nr)
             if int(scene.sat_nr()) != int(sat_nr):
-                print "*** Warning, change Meteosat number to "+str(sat_nr)+" (input: "+str(scene.sat_nr())+")"
+                print "*** Warning, change Meteosat number to ", str(sat_nr), " (input: ",str(scene.sat_nr()),")"
                 #scene.number = str(sat_nr).zfill(2)
                 # !!! update number !!!
                 scene.number = str(sat_nr)
