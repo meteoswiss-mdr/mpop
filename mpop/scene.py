@@ -943,6 +943,7 @@ class SatelliteInstrumentScene(SatelliteScene):
                         radius = 5 * chn.resolution
                     else:
                         radius = 10000
+
                 cov[area_id] = mpop.projector.Projector(chn.area,
                                                         dest_area,
                                                         mode=mode,

@@ -2999,10 +2999,10 @@ def load(scene, **kwargs):
         if filename != None:
             ct_chan = MsgCTTH()
             ct_chan.read(filename,calibrate)
-            print "CCC", scene.sat_nr()
+            #print "CCC", scene.sat_nr()
             ct_chan.satid = (scene.satname[0:8].capitalize() +
                              str(scene.sat_nr()).rjust(2))
-            print "bullshit (nwcsat_msg.py) ", ct_chan.satid   # "Meteosat 9"
+            #print "bullshit (nwcsat_msg.py) ", ct_chan.satid   # "Meteosat 9"
             ct_chan.resolution = ct_chan.area.pixel_size_x
             scene.channels.append(ct_chan)
         
@@ -3085,8 +3085,10 @@ def load(scene, **kwargs):
         # print "nwcsaf_msg", len(filename), filename
         if len(filename) > 12:
             sat_nr= int(basename(filename)[10:11])+7
+            print int(scene.sat_nr())
+            print int(sat_nr)
             if int(scene.sat_nr()) != int(sat_nr):
-                print "*** Warning, change Meteosat number to "+str(sat_nr)+" (input: "+str(scene.sat_nr())+")"
+                print "*** Warning, change Meteosat number to ", str(sat_nr), " (input: ",str(scene.sat_nr()),")"
                 #scene.number = str(sat_nr).zfill(2)
                 # !!! update number !!!
                 scene.number = str(sat_nr)
