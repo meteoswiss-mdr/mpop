@@ -40,6 +40,7 @@ def load(satscene, *args, **kwargs):
         for i in xrange(9):
             radar_product='radar-{0:1d}'.format(i+1)
             prod_name = conf.get(radar_product, "name")
+            print prod_name, chn_name
             if prod_name.replace("'", "").replace('"', '') == chn_name.replace("'", "").replace('"', ''):
                 values["product"]=conf.get(radar_product, "product_name").replace("'", "").replace('"', '')
                 if verbose:

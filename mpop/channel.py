@@ -625,6 +625,8 @@ class Channel(GenericChannel):
 
         return(phiout, lembdaout, alphaout)
 
+# ------------------------------------------------------------
+    
     def parallax_corr(self, cth=None, time_slot=None, orbital=None, azi=None, ele=None, fill="False"):
         '''Perform the parallax correction for channel at
         *time_slot* (datetime.datetime() object), assuming the cloud top height cth
@@ -640,7 +642,7 @@ class Channel(GenericChannel):
                  (azi, ele) = get_viewing_geometry(self, orbital, time_slot)
                  data["VIS006"].parallax_corr(cth=data["CTTH"].height, azi=azi, ele=ele)
         Optional input:
-          cth        The parameter cth is the cloud top height 
+          cth        The parameter cth is the cloud top height in meter 
                      (or  the altitude of the object that should be shifted).
                      cth must have the same size and projection as the channel
 
@@ -687,12 +689,13 @@ class Channel(GenericChannel):
         # mask the cloud top height
         cth_ = np.ma.masked_where(cth < 0, cth, copy=False)
 
-        # Elevation displacement
+        # calculate total displacement (in x and y) from cloud top height and elevation angle 
         dz = cth_ / np.tan(np.deg2rad(ele))
 
         # Create the new channel (by copying) and initialize the data with None values
         new_ch = copy.deepcopy(self)
 
+        # declare new channel as float, as we would like to use not-a-numbers
         #if isinstance(new_ch.data.data[0,0],np.uint8):
         if new_ch.data.dtype == np.uint8:
             new_ch.data=new_ch.data.astype(float)
@@ -711,10 +714,10 @@ class Channel(GenericChannel):
         (proj_x, proj_y) = self.area.get_proj_coords()
 
         print "... calculate parallax shift"
-        # shifting pixels according to parallax corretion 
+        # shifting pixels according to parallax corretion (in meter)
         proj_x_pc = proj_x + np.sin(np.deg2rad(azi)) * dz # shift  West-East in m  
         proj_y_pc = proj_y + np.cos(np.deg2rad(azi)) * dz # shift North(0)-South(positiv) in m
-
+        
         # get indices for the pixels for the original position
         (y, x) = self.area.get_xy_from_proj_coords(proj_x, proj_y)
         # comment: might be done more efficient with meshgrid
@@ -724,6 +727,20 @@ class Channel(GenericChannel):
         # get indices for the pixels at the parallax corrected position
         (y_pc, x_pc) = self.area.get_xy_from_proj_coords(proj_x_pc, proj_y_pc)
 
+        if False:
+            # initialize displacement in pixels 
+            dx=x_pc-x
+            dy=y_pc-y
+            pc_mask = np.full(x_pc.shape, True, dtype=bool)
+            # everywhere where are no clouds, set displacement to 0 in x and y, set mask to False
+            ind = np.where(cth_.mask == True)
+            dx[ind]=0
+            dy[ind]=0
+            pc_mask[ind]=False
+            # add the positions of the displaced pixels (where the clouds are after displacement) as False in mask 
+            ind = np.where(x_pc.mask == False)
+            pc_mask[x_pc[ind], y_pc[ind]] = False
+        
         # copy cloud free satellite pixels (surface observations)
         ind = np.where(cth_.mask == True)
         new_ch.data[x[ind], y[ind]] = self.data[x[ind], y[ind]]
@@ -736,7 +753,7 @@ class Channel(GenericChannel):
         # Mask out data gaps (areas behind the clouds)
         new_ch.data = np.ma.masked_where(
             np.isnan(new_ch.data), new_ch.data, copy=False)
-
+        
         if fill.lower() == "false":
             return new_ch
         elif fill == "nearest":

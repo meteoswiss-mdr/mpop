@@ -3073,7 +3073,7 @@ def load(scene, **kwargs):
             scene.channels.append(ct_chan)
 
     if 'filename' in locals() and filename != None:
-        # print "nwcsaf_msg", len(filename), filename
+        print "nwcsaf_msg", len(filename), filename
         if len(filename) > 12:
             sat_nr= int(basename(filename)[10:11])+7
             if int(scene.sat_nr()) != int(sat_nr):
