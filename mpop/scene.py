@@ -582,7 +582,7 @@ class SatelliteInstrumentScene(SatelliteScene):
 
         from pyorbital.tlefile import get_norad_line
         sat_line = get_norad_line(self.satname, self.number)
-        self.orbital = Orbital(sat_line, allow_NEAR_NORM=allow_NEAR_NORM)
+        self.orbital = Orbital(sat_line, allow_NEAR_NORM=allow_NEAR_NORM) 
 
         return self.orbital
 
