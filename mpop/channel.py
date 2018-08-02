@@ -627,7 +627,7 @@ class Channel(GenericChannel):
 
 # ------------------------------------------------------------
     
-    def parallax_corr(self, cth=None, time_slot=None, orbital=None, azi=None, ele=None, fill="False"):
+    def parallax_corr(self, cth=None, time_slot=None, orbital=None, azi=[], ele=[], fill="False"):
         '''Perform the parallax correction for channel at
         *time_slot* (datetime.datetime() object), assuming the cloud top height cth
         and the viewing geometry given by the satellite orbital "orbital" and return the
@@ -672,7 +672,7 @@ class Channel(GenericChannel):
             if "time" in self.info.keys():
                 time_slot = self.info["time"]
 
-        if azi == None or ele == None:
+        if azi.size == 0 or ele.size == 0:
             if time_slot == None or orbital == None:
                 print "*** Error in parallax_corr (mpop/channel.py)"
                 print "    parallax_corr needs either time_slot and orbital"
