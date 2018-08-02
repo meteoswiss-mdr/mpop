@@ -110,10 +110,10 @@ def load(satscene, **kargs):
             data, fill_value, units, long_name = read_h03_netCDF(outfile)
         call("rm "+ outfile  +" 2>&1", shell=True) # delete tmporary file 
 
-    if units == "kg m**-2 s**-1" or units == "kg m-2s-1":
+    if units == "kg m**-2 s**-1" or units == "kg m-2s-1" or units == "kg m-2 s-1":
         data *= 3600 
         units = "kg m-2 h-1"
-
+        
     satscene['h03'] = data
     satscene['h03'].fill_value = fill_value
     satscene['h03'].units      = units
@@ -172,7 +172,10 @@ def read_h03_grib(filename):
     grb = grbs.select(name=long_name)[0]
     # print(grb)
     data = ma.asarray(grb.values)
-    data.mask = (data == 0.0) 
+    
+    # mask data for no rain and "no cloud" marker
+    data = ma.masked_where(data ==    0.0, data)
+    data = ma.masked_where(data == 9999.0, data)
 
     print '    fill_value: ', 0 
     print '    units:      ', units
@@ -246,6 +249,9 @@ def read_h03_netCDF(filename):
             print "    probably more time steps in one file (not implemented yet)"
             quit()
 
-    data.mask = (data == _FillValue) | (data == 0.0) 
+    # mask data for no rain, fill_value and no cloud marker
+    data = ma.masked_where(data ==        0.0, data)
+    data = ma.masked_where(data == _FillValue, data)
+    data = ma.masked_where(data ==     9999.0, data)
 
     return data, _FillValue, units, long_name 
