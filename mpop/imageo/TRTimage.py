@@ -64,8 +64,11 @@ def TRTimage( TRTcell_IDs, TRTcells, obj_area, minRank=8, alpha_max=1.0, plot_ve
     ax.set_xlim(0, nx)
     ax.set_ylim(0, ny)
     # set transparent backgroud 
-    fig.patch.set_alpha(0.0)        # transparent outside of diagram  
-    ax.set_axis_bgcolor([1,0,0,0])  # transparent color inside diagram 
+    fig.patch.set_alpha(0.0)        # transparent outside of diagram
+    if hasattr(ax, 'set_axis_bgcolor'):
+        ax.set_axis_bgcolor([1,0,0,0])  # transparent color inside diagram
+    else:
+        ax.set_facecolor([1,0,0,0])
 
     # define arrow properties 
     head_width  = 0.006 * min(obj_area.x_size,obj_area.x_size)
