@@ -1,4 +1,3 @@
-import Image
 import logging
 import glob
 import os
@@ -23,13 +22,14 @@ import logging
 def load(satscene, *args, **kwargs):
     """Loads the *channels* into the satellite *scene*.
     """
-
+    
     # Dataset information
     #
     # Read config file content
     conf = ConfigParser()
     conf.read(os.path.join(CONFIG_PATH, satscene.fullname + ".cfg"))
-
+    print "... read configuration from", os.path.join(CONFIG_PATH, satscene.fullname + ".cfg")
+    
     values = {"orbit": satscene.orbit,
               "satname": satscene.satname,
               "number": satscene.number,
@@ -108,7 +108,7 @@ def load(satscene, *args, **kwargs):
     #data = readLightning (filename, IC_CG='CG')
     #data = readLightning (filename, IC_CG='IC')
     dens, densIC, densCG, curr_abs, curr_neg, curr_pos = readLightning (filename, NEAR_REAL_TIME, satscene.time_slot, dt=dt, area=projectionName) # , form='square'
-
+    
     # get projection 
     projection = pyresample.utils.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
     #print projection

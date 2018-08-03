@@ -1,4 +1,3 @@
-import Image
 import logging
 import glob
 import os
@@ -29,6 +28,7 @@ def load(satscene, *args, **kwargs):
     # Read config file content
     conf = ConfigParser()
     conf.read(os.path.join(CONFIG_PATH, satscene.fullname + ".cfg"))
+    print "... read lightning config from ", os.path.join(CONFIG_PATH, satscene.fullname + ".cfg")
 
     values = {"orbit": satscene.orbit,
               "satname": satscene.satname,
@@ -67,7 +67,7 @@ def load(satscene, *args, **kwargs):
         filename = os.path.join(
             satscene.time_slot.strftime(conf.get("thx-level2", "archive_dir")),
             satscene.time_slot.strftime(conf.get("thx-level2", "archive_filename", raw=True)) % values)
-
+        
     ## my old solution 
     #filename = os.path.join(
     #    satscene.time_slot.strftime(conf.get("thx-level2", "dir")),
@@ -85,8 +85,13 @@ def load(satscene, *args, **kwargs):
     print "... read the observation of the last ", dt, " min"
 
     # Load data from txt file 
-    print "... read data from", str(filename)
-    if len(glob.glob(str(filename))) == 0:
+    print "... read data from", str(filename), os.path.dirname(filename)
+
+    if not os.path.isdir(os.path.dirname(filename)):
+        print '*** ERROR, lightning input directory '+str(os.path.dirname(filename))+' cannot be accessed'
+        print '    please check the config file'
+        quit()
+    elif len(glob.glob(str(filename))) == 0:
         "*** WARNING, no file "+str(filename)+" found!"
         filename=""
     elif len(glob.glob(str(filename))) > 1:
@@ -349,13 +354,18 @@ def unfold_lightning(prop, dx, form):
 
     elif form == 'gaussgauss':
         from scipy import ndimage
-        print "unfold_lightning (lighting.py) min/max = ", prop.min(), prop.max()
+        #print "unfold_lightning (lighting.py) min/max = ", prop.min(), prop.max()
         print '... apply gauss filter with half width of (0.5*', dx, ") km"
             # tuned that it looks similar to the circle with the same dx
         prop = ndimage.gaussian_filter(prop, 0.5*dx)
         data = ma.asarray( ndimage.gaussian_filter(prop, 0.5*dx) )
         print "unfold_lightning (lighting.py) min/max = ", data.min(), data.max()
-        return ma.masked_less(data, 0.001)
+        d_min=0.001
+        print "... neglect values below ", d_min
+        data=ma.masked_less(data, d_min)
+        print "unfold_lightning (lighting.py) min/max = ", data.min(), data.max()
+        print "hallo world"
+        return data
 
 
     else:

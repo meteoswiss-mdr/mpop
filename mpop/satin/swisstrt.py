@@ -1,4 +1,3 @@
-import Image
 import logging
 import glob
 import os
