@@ -349,22 +349,25 @@ def unfold_lightning(prop, dx, form):
         print '... apply gauss filter with half width of (0.5*', dx, ") km"
             # tuned that it looks similar to the circle with the same dx
         data = ma.asarray( ndimage.gaussian_filter(prop, 0.5*dx) )
-        print "unfold_lightning (lighting.py) min/max = ", data.min(), data.max()
-        return ma.masked_less(data, 0.001)
+        #print "unfold_lightning (lighting.py) min/max = ", data.min(), data.max()
+        d_min=0.001
+        print "... neglect small values below ", d_min
+        data=ma.masked_less(data, d_min)
+        #print "unfold_lightning (lighting.py) min/max = ", data.min(), data.max()
+        return data
 
     elif form == 'gaussgauss':
         from scipy import ndimage
         #print "unfold_lightning (lighting.py) min/max = ", prop.min(), prop.max()
-        print '... apply gauss filter with half width of (0.5*', dx, ") km"
+        print '... apply DOUBLE gauss filter with half width of (0.5*', dx, ") km"
             # tuned that it looks similar to the circle with the same dx
         prop = ndimage.gaussian_filter(prop, 0.5*dx)
         data = ma.asarray( ndimage.gaussian_filter(prop, 0.5*dx) )
-        print "unfold_lightning (lighting.py) min/max = ", data.min(), data.max()
+        #print "unfold_lightning (lighting.py) min/max = ", data.min(), data.max()
         d_min=0.001
         print "... neglect values below ", d_min
         data=ma.masked_less(data, d_min)
-        print "unfold_lightning (lighting.py) min/max = ", data.min(), data.max()
-        print "hallo world"
+        #print "unfold_lightning (lighting.py) min/max = ", data.min(), data.max()
         return data
 
 
