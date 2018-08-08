@@ -1,4 +1,3 @@
-import Image
 import glob
 import os
 from ConfigParser import ConfigParser
