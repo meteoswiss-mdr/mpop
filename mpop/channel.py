@@ -753,7 +753,8 @@ class Channel(GenericChannel):
         # Mask out data gaps (areas behind the clouds)
         new_ch.data = np.ma.masked_where(
             np.isnan(new_ch.data), new_ch.data, copy=False)
-        
+
+        print "... fill missing values with method:", fill
         if fill.lower() == "false":
             return new_ch
         elif fill == "nearest":
@@ -783,6 +784,7 @@ class Channel(GenericChannel):
             quit()
 
         if 'inttofloat' in locals():
+            print "... type cast data as int"
             new_ch.data = new_ch.data.astype(int)
 
         return new_ch
