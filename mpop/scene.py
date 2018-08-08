@@ -481,7 +481,7 @@ class SatelliteInstrumentScene(SatelliteScene):
                 return
 
             if "reader_level" in kwargs.keys():
-                if kwargs["reader_level"] != None:
+                if kwargs["reader_level"] is not None:
                     LOG.debug(
                         "Using explecit definition of reader level: " + kwargs["reader_level"])
                     if kwargs["reader_level"] != level:
@@ -644,7 +644,7 @@ class SatelliteInstrumentScene(SatelliteScene):
             (yc, xc) = ir108.shape
             (lon, lat) = self.area.get_lonlat(yc / 2, xc / 2)
 
-            if time_slot == None:
+            if time_slot is None:
                 if hasattr(self, 'time_slot'):
                     time_slot = self.time_slot
                 else:
@@ -748,7 +748,7 @@ class SatelliteInstrumentScene(SatelliteScene):
 
         # choose best way to get CTH for parallax correction
         if not estimate_cth:
-            if cth == None:
+            if cth is None:
                 if "CTTH" in loaded_channels:
                     # make a copy of CTH, as it might get replace by its parallax
                     # corrected version
