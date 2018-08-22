@@ -482,6 +482,11 @@ class SatelliteInstrumentScene(SatelliteScene):
 
             if "reader_level" in kwargs.keys():
                 if kwargs["reader_level"] is not None:
+                    if kwargs["reader_level"] not in levels:
+                        LOG.warning("Specified reader_level \""+
+                                    kwargs["reader_level"]+"\" in not defined in config file")
+                        print "*** ERROR, specified reader_level \""+\
+                                    kwargs["reader_level"]+"\" in not defined in config file"
                     LOG.debug(
                         "Using explecit definition of reader level: " + kwargs["reader_level"])
                     if kwargs["reader_level"] != level:
