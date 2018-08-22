@@ -20,7 +20,7 @@ units      = {0.6:'percent', 0.8:'percent', 1.6:'percent', 3.9:'K', 6.2:'K', 7.3
               'VIS006':'percent', 'VIS008':'percent', 'IR_016':'percent', 'IR_039':'K', 'WV_062':'K', 'WV_073':'K',\
               'IR_087':'K', 'IR_097':'K', 'IR_108':'K', 'IR_120':'K', 'IR_134':'K', 'HRV':'percent'}
 
-def load(satscene, **kargs):
+def load(satscene, **kwargs):
     """Load MSG SEVIRI radiances from netCDF file.
     """
     
@@ -28,9 +28,16 @@ def load(satscene, **kargs):
     conf = ConfigParser()
     conf.read(os.path.join(CONFIG_PATH, satscene.fullname + ".cfg"))
 
+    if "reader_level" in kwargs.keys():
+        if kwargs["reader_level"] is not None and kwargs["reader_level"] != "":
+            reader_level = kwargs["reader_level"]
+        else:
+            reader_level = "seviri-level8"
+    print "... use reader_level:", reader_level
+                
     # assume this is reader_level seviri-level8
-    filename = os.path.join( satscene.time_slot.strftime(conf.get("seviri-level8", "dir", raw=True)),
-                             satscene.time_slot.strftime(conf.get("seviri-level8", "filename", raw=True)))
+    filename = os.path.join( satscene.time_slot.strftime(conf.get(reader_level, "dir", raw=True)),
+                             satscene.time_slot.strftime(conf.get(reader_level, "filename", raw=True)))
 
     print "... search for file: ", filename
     filenames=glob(str(filename))
