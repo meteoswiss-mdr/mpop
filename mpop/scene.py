@@ -581,14 +581,16 @@ class SatelliteInstrumentScene(SatelliteScene):
         """
         return set([chan for chan in self.channels if chan.is_loaded()])
 
-    def get_orbital(self, allow_NEAR_NORM=False):
+    def get_orbital(self, use_NEAR_for_DEEP_space=False):
         from pyorbital.orbital import Orbital
         from pyorbital import tlefile
 
         from pyorbital.tlefile import get_norad_line
         sat_line = get_norad_line(self.satname, self.number)
-        self.orbital = Orbital(sat_line, allow_NEAR_NORM=allow_NEAR_NORM) 
-
+        print sat_line
+        self.orbital = Orbital(sat_line, use_NEAR_for_DEEP_space=use_NEAR_for_DEEP_space) 
+        print self.orbital
+        
         return self.orbital
 
     def estimate_cth(self, cth_atm="best", time_slot=None, IR_108=None):
@@ -740,7 +742,7 @@ class SatelliteInstrumentScene(SatelliteScene):
 
         # currently orbit calculation for deep space (=geostationary) satellites are not yet implemented
         # we use near space calculations instead, !!! PLEASE FIX IF YOU HAVE TIME !!!
-        allow_NEAR_NORM=True
+        use_NEAR_for_DEEP_space=True
         
         # loop over channels and check, if one is a normal radiance channel
         # having the method to calculate the viewing geometry
@@ -748,7 +750,7 @@ class SatelliteInstrumentScene(SatelliteScene):
             if hasattr(chn, 'get_viewing_geometry'):
                 # calculate the viewing geometry of the SEVIRI sensor
                 print "... calculate viewing geometry using ", chn.name
-                (azi, ele) = chn.get_viewing_geometry(self.get_orbital(allow_NEAR_NORM=allow_NEAR_NORM), self.time_slot)
+                (azi, ele) = chn.get_viewing_geometry(self.get_orbital(use_NEAR_for_DEEP_space=use_NEAR_for_DEEP_space), self.time_slot)
                 break
 
         # choose best way to get CTH for parallax correction
