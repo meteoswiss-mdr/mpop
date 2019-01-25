@@ -480,15 +480,15 @@ def somerc2cf(proj_dict):
 
     new_dict = {}
     new_dict["grid_mapping_name"] = "swiss_oblique_mercator"
-    new_dict["latitude_of_projection_origin"]  = eval(proj_dict["lat_0"])
-    new_dict["longitude_of_projection_origin"] = eval(proj_dict["lon_0"])
+    new_dict["latitude_of_projection_origin"]  = eval(str(proj_dict["lat_0"]))
+    new_dict["longitude_of_projection_origin"] = eval(str(proj_dict["lon_0"]))
     new_dict["ellipsoid"]                      = proj_dict["ellps"]
     if "x_0" in proj_dict:
-        new_dict["false_easting"] = eval(proj_dict.get("x_0", "0"))
+        new_dict["false_easting"] = eval(str(proj_dict.get("x_0", "0")))
     if "y_0" in proj_dict:
-        new_dict["false_northing"] = eval(proj_dict.get("y_0", "0"))
+        new_dict["false_northing"] = eval(str(proj_dict.get("y_0", "0")))
     if "k_0" in proj_dict:
-        new_dict["scale_factor_at_projection_origin"] = eval(proj_dict.get("k_0", "1.0"))
+        new_dict["scale_factor_at_projection_origin"] = eval(str(proj_dict.get("k_0", "1.0")))
             
     return new_dict
 
