@@ -58,6 +58,13 @@ try:
 except ImportError:
     LOG.warning("pyresample missing. Can only work in satellite projection")
 
+def add_check_sum(line):
+    checkSum=0
+    for s in line.replace("-","1"):
+        if s in "0123456789":
+            checkSum+=int(s)
+    line += str(checkSum % 10)
+    return line
 
 class Satellite(object):
 
@@ -580,16 +587,44 @@ class SatelliteInstrumentScene(SatelliteScene):
         """Return the set of loaded_channels.
         """
         return set([chan for chan in self.channels if chan.is_loaded()])
-
+    
     def get_orbital(self, use_NEAR_for_DEEP_space=False):
         from pyorbital.orbital import Orbital
         from pyorbital import tlefile
 
         from pyorbital.tlefile import get_norad_line
         sat_line = get_norad_line(self.satname, self.number)
-        print sat_line
-        self.orbital = Orbital(sat_line, use_NEAR_for_DEEP_space=use_NEAR_for_DEEP_space) 
-        print self.orbital
+        print "mpop/scene.py: sat_line=", sat_line
+
+        if not ("METEOSAT" in sat_line):
+            # default solution: download most recent TLE
+            self.orbital = Orbital(sat_line, use_NEAR_for_DEEP_space=use_NEAR_for_DEEP_space)
+        else:
+            if ((datetime.datetime.utcnow() - self.time_slot > datetime.timedelta(days=30))):
+                orbitDir="/data/COALITION2/database/meteosat/SEVIRI/orbit"
+                NORADCatalogNumbers={"METEOSAT-8 (MSG-1)":"27509","METEOSAT-9 (MSG-2)":"28912","METEOSAT-10 (MSG-3)":"38552","METEOSAT-11 (MSG-4)":"40732"}
+                print "... try to read celestrak file:", orbitDir+"/sat"+NORADCatalogNumbers[sat_line]+".txt"
+                if os.path.isfile(orbitDir+"/sat"+NORADCatalogNumbers[sat_line]+".txt"):
+                    with open('/data/COALITION2/database/meteosat/SEVIRI/orbit/sat28912.txt') as f:
+                        content = f.readlines()
+                    lines1=content[0::2]
+                    lines2=content[1::2]
+                    dates=[datetime.datetime.strptime(l[18:23],'%y%j')+datetime.timedelta(days=float(l[18:32])%1) for l in lines1]
+                    it = (abs(np.asarray(dates)-self.time_slot)).argmin()
+                    ## e.g. Meteosat-9 (MSG2) ca. 2015-07-08 20UTC
+                    #line1 = "1 28912U 05049B   15189.83442831  .00000046  00000-0  00000+0 0  9996"
+                    #line2 = "2 28912   0.8588  58.7756 0001042 172.8619   4.4407  1.00274837 35001"
+                    self.orbital = Orbital(sat_line, line1=lines1[it], line2=lines2[it], use_NEAR_for_DEEP_space=use_NEAR_for_DEEP_space)
+                else:
+                    print "*** WARNING in get_orbital (mpop/sceme.py)"
+                    print "    You like to investigate a date longer than 30 days ago"
+                    print "    per default pytroll uses the current TLE information"
+                    print "    You might consider to order historic TLE, please order them via"
+                    print "    https://celestrak.com/NORAD/archives/request.php"
+                    print "*** Continue with current TLE information"
+                    self.orbital = Orbital(sat_line, use_NEAR_for_DEEP_space=use_NEAR_for_DEEP_space)
+                        
+        print "mpop/scene.py: self.orbital", self.orbital
         
         return self.orbital
 
