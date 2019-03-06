@@ -231,7 +231,8 @@ def readRdt(filename, **kwargs):
         # max RANK is  2014072316000004 16 44 511.0 466.0
         print "                 traj_ID        Rank Area  x0   y0"
  
-        if len(RANKs) > 0:
+        if False: #len(RANKs) > 0:
+            print "                 traj_ID        Rank Area  x0   y0"
             RANKs_np = np.array(RANKs)
             i_max = np.argmax(RANKs_np)
             max_rank = RANKs_np[i_max]
