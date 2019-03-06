@@ -33,6 +33,8 @@ def load(satscene, **kwargs):
             reader_level = kwargs["reader_level"]
         else:
             reader_level = "seviri-level8"
+    else:
+        reader_level = "seviri-level8"
     print "... use reader_level:", reader_level
                 
     # assume this is reader_level seviri-level8
