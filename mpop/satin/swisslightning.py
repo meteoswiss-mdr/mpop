@@ -348,7 +348,7 @@ def unfold_lightning(prop, dx, form):
         print "unfold_lightning (lighting.py) min/max = ", prop.min(), prop.max()
         print '... apply gauss filter with half width of (0.5*', dx, ") km"
             # tuned that it looks similar to the circle with the same dx
-        data = ma.asarray( ndimage.gaussian_filter(prop, 0.5*dx) )
+        data = ma.asarray( ndimage.gaussian_filter(prop, 0.5*dx, output=np.float32) )
         #print "unfold_lightning (lighting.py) min/max = ", data.min(), data.max()
         d_min=0.001
         print "... neglect small values below ", d_min
@@ -362,7 +362,7 @@ def unfold_lightning(prop, dx, form):
         print '... apply DOUBLE gauss filter with half width of (0.5*', dx, ") km"
             # tuned that it looks similar to the circle with the same dx
         prop = ndimage.gaussian_filter(prop, 0.5*dx)
-        data = ma.asarray( ndimage.gaussian_filter(prop, 0.5*dx) )
+        data = ma.asarray( ndimage.gaussian_filter(prop, 0.5*dx, output=np.float32) )
         #print "unfold_lightning (lighting.py) min/max = ", data.min(), data.max()
         d_min=0.001
         print "... neglect values below ", d_min
@@ -375,3 +375,307 @@ def unfold_lightning(prop, dx, form):
         print '*** ERROR in unfold_lightning (lightning.py)'
         print '    unknown form ', form
 
+def convert_THXprod_nc_daily(input_file_path, output_file_path, date_obj, dt=5, area='ccs4'):
+    """Read THX lightning data file and save as daily nc-file.
+
+    Parameters
+    ----------
+    
+    input_file_path : str
+        File path defining location of .prod file to be read.
+        
+    output_file_path : str
+        File path defining location of .nc file to be written.
+    
+    date_obj : list of datetime object
+        Datetime object defining date for which to write daily nc-file.
+        
+    dt : int
+        Temporal length in minutes over which lightnings should be added.
+    """
+    
+    if area!='ccs4':
+        print("*** Function only implemented for ccs4 projection - no return")
+    elif len(date_obj)<1:
+        print("*** Function needs at least one datetime object - no return")
+        return
+    
+    while 60%dt!=0:
+        dt = int(input("*** 60min modulo dt must be 0, enter new dt: ***"))
+    n_temporal_steps = 24*60/dt
+        
+    ## Loop over all days provided
+    for dat in date_obj:
+        dat_str = dat.strftime("THX%y%j0000")
+        input_file_path_str  = "%s/%s.prd" % (input_file_path,dat_str)
+        output_file_path_str = "%s/%s.nc" % (input_file_path,dat_str)
+        print("Convert THX ascii file\n   %s\nto\n   %s" %
+              (input_file_path_str,output_file_path_str))
+        
+        ## Predefine numpy array for results:
+        THX_array = np.zeros((n_temporal_steps,6,640,710))*np.nan
+        
+        ## Set hours, minutes etc to zero:
+        t0 = dat.replace(hour=0, minute=0)
+        t0_list = []
+        
+        ## Read lightning THX text file:
+        for i in range(n_temporal_steps):
+            t0 = t0 + datetime.timedelta(minutes=dt)
+            t0_list.append(t0)
+            if t0.minute==0: print("   ... working on %s" % datetime.datetime.strftime(t0, "%d.%m.%Y %H:%M"))
+            THX_tuple = readLightning(file=input_file_path_str, NEAR_REAL_TIME=False,
+                                      time_slot=t0, dt=dt, area='ccs4')
+            THX_array[i,:,:,:] = np.array(THX_tuple)
+        
+        ## Save as nc-file:
+        THX_nc(output_file_path_str,THX_array,dat,dat_str,n_temporal_steps)
+        
+
+
+def convert_THXprod_nc_daily_direct(input_file_path, output_file_path, date_obj, dt=5, area='ccs4'):
+    """Read THX lightning data file (directly) and save as daily nc-file
+    This routine does not use the function "readLightning" for every new line, but has
+    the essential code included, thus is much more efficient (no opening/closing every
+    line).
+
+    Parameters
+    ----------
+    
+    input_file_path : str
+        File path defining location of .prod file to be read.
+        
+    output_file_path : str
+        File path defining location of .nc file to be written.
+    
+    date_obj : list of datetime object
+        Datetime object defining date for which to write daily nc-file.
+        
+    dt : int
+        Temporal length in minutes over which lightnings should be added.
+    """
+    from numpy import genfromtxt, floor, ceil, zeros, nonzero, rot90, flipud
+    from ApproxSwissProj import ApproxSwissProj 
+    import numpy.ma as ma
+    from os import stat
+    import pdb
+    
+    from mpop.projector import get_area_def
+    obj_area = get_area_def(area)
+    ni = obj_area.y_size # 640 for ccs4
+    nj = obj_area.x_size # 710 for ccs4
+
+
+    if area!='ccs4':
+        print("*** Function only implemented for ccs4 projection - no return")
+    elif len(date_obj)<1:
+        print("*** Function needs at least on datetime object - no return")
+        return
+    
+    while 60%dt!=0:
+        dt = int(input("*** 60min modulo dt must be 0, enter new dt: "))
+    n_temporal_steps = 24*60/dt
+    dtime = datetime.timedelta(minutes=dt)
+    
+        
+    ## Loop over all days provided
+    for dat in date_obj:
+        t1 = datetime.datetime.now()
+        dat_str = dat.strftime("THX%y%j0000")
+        input_file_path_str  = "%s/%s.prd" % (input_file_path,dat_str)
+        output_file_path_str = "%s/%s.nc" % (output_file_path,dat_str)
+        print("Convert THX ascii file\n   %s\nto\n   %s" %
+              (input_file_path_str,output_file_path_str))
+        
+        ## Set hours, minutes etc to zero:
+        t0 = dat.replace(hour=0, minute=0)
+        temporal_steps = t0 + datetime.timedelta(minutes=dt)*np.arange(n_temporal_steps)
+        
+        ## Predefine numpy array for results:
+        THX_array_dens = np.zeros((n_temporal_steps,3,640,710),dtype=np.uint16)
+        THX_array_curr = np.zeros((n_temporal_steps,3,640,710),dtype=np.float32)
+        #THX_array = np.zeros((n_temporal_steps,640,710),dtype=np.uint16)
+        
+        ## Check that ascii file is not empty:
+        if os.stat(input_file_path_str).st_size==0:
+            print("   THX .prd file is empty, returning zero-array.")
+            THX_nc(output_file_path_str,THX_array_curr,THX_array_dens,
+                   dat,dat_str,n_temporal_steps,dt,temporal_steps)
+            t2 = datetime.datetime.now()
+            print("  Elapsed time for NetCDF conversion: "+str(t2-t1)+"\n")
+            continue
+        
+        ## If file is not empty, read it:
+        data = genfromtxt(input_file_path_str, dtype=None,
+                          names=('date', 'lon', 'lat','current','nS','mode',
+                                 'intra','Ax','Ki2','Exc','Incl','Arc','d1',
+                                 'd2','d3','d4','d5'), delimiter="|")
+        
+        ## NOT SO NICE: If ascii file has only one line (one lightning detected),
+        ## still return zero array.
+        if data['date'].ndim==0:
+            print("   THX .prd file has only one line, returning zero-array.")
+            THX_nc(output_file_path_str,THX_array_curr,THX_array_dens,
+                   dat,dat_str,n_temporal_steps,dt,temporal_steps)
+            t2 = datetime.datetime.now()
+            print("  Elapsed time for NetCDF conversion: "+str(t2-t1)+"\n")
+            continue
+            #days    = str(data['date'])[ 0: 2]
+            #months  = str(data['date'])[ 3: 5]
+            #years   = str(data['date'])[ 6:10] 
+            #hours   = str(data['date'])[11:13]
+            #mins    = str(data['date'])[14:16]
+            #secs    = str(data['date'])[17:21]
+            #intra   = data['intra']   
+            #current = data['current']
+        else:
+            days    = [str(date)[ 0: 2] for date in data['date']]
+            months  = [str(date)[ 3: 5] for date in data['date']]
+            years   = [str(date)[ 6:10] for date in data['date']]
+            hours   = [str(date)[11:13] for date in data['date']]
+            mins    = [str(date)[14:16] for date in data['date']]
+            secs    = [str(date)[17:21] for date in data['date']]
+            intra   = data['intra']   
+            current = data['current']
+        
+        ## Reproject lat/lon- to ccsi4 x/y-coordinates
+        (jCH, iCH) = obj_area.get_xy_from_lonlat(data['lon'], data['lat'], outside_error=False) #, outside_error=True) # EDIT 3       # for Bern (345, 280)
+        
+        # returns an int, if only one element lon and lat data is passed
+        if isinstance(jCH, int):
+            jCH = [jCH]
+        if isinstance(iCH, int):
+            iCH = [iCH]
+            
+        ## Read lightning THX text file:
+        for i, j, YYYY, MM, DD, hh, mm, ss, ltype, curr in zip(iCH, jCH, years, months, days, hours, mins, secs, intra, current):
+            t_light = datetime.datetime(int(YYYY), int(MM), int(DD), int(hh), int(mm)) #, int(float(ss)) ) 
+            #if ( t_light < t0 and t0-t_light < dtime ):
+            t_light_round = t_light - datetime.timedelta(minutes=t_light.minute % 5)
+            if 0<i and i<ni and 0<j and j<nj:
+                ti = np.where(temporal_steps==t_light_round)
+                #THX_array[ti,i,j]+=1
+                THX_array_dens[ti,0,i,j]+=1
+                THX_array_curr[ti,0,i,j]+=abs(curr)
+                if curr < 0:
+                    THX_array_curr[ti,1,i,j]+=curr
+                else:
+                    THX_array_curr[ti,2,i,j]+=curr
+                if ltype == 'IC' or ltype == 1:
+                    #print "... only intra clouds lightnings", YYYY, MM, DD, hh, mm, ltype
+                    THX_array_dens[ti,1,i,j]+=1  
+                if ltype=='CG' or ltype==0:
+                    #print "... only clouds2ground lightnings", YYYY, MM, DD, hh, mm, ltype
+                    THX_array_dens[ti,2,i,j]+=1
+            #if t0 + dtime < t_light :
+            #    break
+        
+        
+        #import pysteps as stTHX_array_dens
+        #st.plt.animate(THX_array_dens[200:1000,0,:,:],1)
+        #pdb.set_trace()
+        
+        ## Save as nc-file:
+        THX_nc(output_file_path_str,THX_array_curr,THX_array_dens,dat,dat_str,n_temporal_steps,dt,temporal_steps)
+        t2 = datetime.datetime.now()
+        print("  Elapsed time for NetCDF conversion: "+str(t2-t1)+"\n")
+
+        
+def THX_nc(output_file_path_str,THX_array_curr,THX_array_dens,dat,dat_str,
+           n_temporal_steps,dt,temporal_steps):
+    """NetCDF file writer for convert_THXprod_nc_daily_direct function.
+
+    Parameters
+    ----------
+    
+    THX_array : numpy array
+        Numpy array with THX values.
+    
+    output_file_path_str : str
+        File path defining location of .nc file to be written.
+    
+    dat : list of datetime object
+        Datetime object defining date for which to write daily nc-file.
+        
+    dat_str : str
+        Date string of dat.
+        
+    n_temporal_steps : [int]
+        Number of time steps (=24h*60min/dt).
+    """
+    
+    from netCDF4 import Dataset, num2date, date2num
+    dataset = Dataset(output_file_path_str,
+                      'w', format='NETCDF4_CLASSIC')
+                      
+    ## Dimension creation  
+    x = dataset.createDimension('x', THX_array_dens.shape[3])
+    y = dataset.createDimension('y', THX_array_dens.shape[2])
+    time = dataset.createDimension('time', None) #THX_array_dens.shape[0])
+    
+    ## Variable creation
+    times = dataset.createVariable('time', np.int16, ('time',))
+    x_axis = dataset.createVariable('x', np.float32,('x',))
+    y_axis = dataset.createVariable('y', np.float32,('y',))
+            
+    dens     = dataset.createVariable('THX_dens', np.int16,('time','y','x'),zlib=True)
+    densCG   = dataset.createVariable('THX_densCG', np.int16,('time','y','x'),zlib=True)
+    densIC   = dataset.createVariable('THX_densIC', np.int16,('time','y','x'),zlib=True)
+    curr_abs = dataset.createVariable('THX_curr_abs', np.float32,('time','y','x'),zlib=True)
+    curr_pos = dataset.createVariable('THX_curr_pos', np.float32,('time','y','x'),zlib=True)
+    curr_neg = dataset.createVariable('THX_curr_neg', np.float32,('time','y','x'),zlib=True)
+    
+    ## Variable attributes
+    times.calendar = 'standard'
+    times.units = 'minutes since %s' % dat.strftime("%Y-%m-%d %H:%M:%S")
+    #times.calendar = 'gregorian'
+    #times.units = 'minutes since %s' % (dat.strftime("%Y:%m:%d %H-%M-%S"))
+    datetime_list = dat + np.arange(n_temporal_steps)*datetime.timedelta(minutes=dt) + datetime.timedelta(minutes=5)    
+    times[:] = date2num(datetime_list,units=times.units) #np.arange(n_temporal_steps)*dt+5
+    #times.units = str('%sminutes since %s' % (str(dt), dat.strftime("%Y:%m:%d %H-%M-%S")))
+    #times[:] = date2num(temporal_steps, units=times.units, calendar=times.calendar)
+
+    ## Variable assignment
+    y_axis.units = 'Swiss northing CH1903 [km]'
+    x_axis.units = 'Swiss easting CH1903 [km]'
+    #y_axis.units   = 'km of ccs4 projection'
+    #x_axis.units   = 'km of ccs4 projection'
+    x_axis[:]    = np.arange(255,965)+0.5
+    y_axis[::-1] = np.arange(-160,480)+0.5
+
+    dens.setncatts({'long_name': u"Lightning density",'units': u"km-2"})
+    densCG.setncatts({'long_name': u"Lightning density (cloud-to-ground)",'units': u"km-2"})
+    densIC.setncatts({'long_name': u"Lightning density (Inter/Intra-cloud)",'units': u"km-2"})
+    curr_abs.setncatts({'long_name': u"Absolute current",'units': u"kA"})
+    curr_pos.setncatts({'long_name': u"Negative current",'units': u"kA"})
+    curr_neg.setncatts({'long_name': u"Positive current",'units': u"kA"})
+    
+    #dens.units = densCG.units = densIC.units = 'km-2' # = 'count'#
+    #curr_abs.units = curr_pos.units = curr_neg.units = 'kA'
+    dens[:,:,:]     = THX_array_dens[:,0,:,:]
+    densIC[:,:,:]   = THX_array_dens[:,1,:,:]
+    densCG[:,:,:]   = THX_array_dens[:,2,:,:]
+    curr_abs[:,:,:] = THX_array_curr[:,0,:,:]
+    curr_neg[:,:,:] = THX_array_curr[:,1,:,:]
+    curr_pos[:,:,:] = THX_array_curr[:,2,:,:]
+    print("   Max density value = %d" % np.max(dens))
+        
+    dataset.description = 'THX Lightning data of day '+dat.strftime("%d.%m.%Y")
+    dataset.history = 'Created ' + datetime.datetime.now().strftime("%d.%m.%Y %H:%M")
+    
+    dataset.close()
+    print("   Written NetCDF file for: %s" % dat.strftime("%d.%m.%y"))
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
