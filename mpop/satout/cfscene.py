@@ -285,6 +285,7 @@ class CFScene(object):
                                        lons.info["var_name"])
                 xy_names = ["y" + str_arc, "x" + str_arc]
 
+            chn.info['units'] = 'K'
             if (area_aggregation and not time_dimension and
                     (chn.area, chn.info['units']) in area_units and concatenate_bands):
 
@@ -452,10 +453,10 @@ def geos2cf(proj_dict):
 
     return {"grid_mapping_name": "geostationary",
             "latitude_of_projection_origin": 0.0,
-            "longitude_of_projection_origin": eval(proj_dict["lon_0"]),
-            "semi_major_axis": eval(proj_dict["a"]),
-            "semi_minor_axis": eval(proj_dict["b"]),
-            "perspective_point_height": eval(proj_dict["h"])
+            "longitude_of_projection_origin": eval(str(proj_dict["lon_0"])),
+            "semi_major_axis": eval(str(proj_dict["a"])),
+            "semi_minor_axis": eval(str(proj_dict["b"])),
+            "perspective_point_height": eval(str(proj_dict["h"]))
             }
 
 
