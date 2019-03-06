@@ -594,7 +594,7 @@ class SatelliteInstrumentScene(SatelliteScene):
 
         from pyorbital.tlefile import get_norad_line
         sat_line = get_norad_line(self.satname, self.number)
-        print "mpop/scene.py: sat_line=", sat_line
+        #print "mpop/scene.py: sat_line=", sat_line
 
         if not ("METEOSAT" in sat_line):
             # default solution: download most recent TLE
@@ -623,8 +623,10 @@ class SatelliteInstrumentScene(SatelliteScene):
                     print "    https://celestrak.com/NORAD/archives/request.php"
                     print "*** Continue with current TLE information"
                     self.orbital = Orbital(sat_line, use_NEAR_for_DEEP_space=use_NEAR_for_DEEP_space)
-                        
-        print "mpop/scene.py: self.orbital", self.orbital
+                    
+        #print "mpop/scene.py: self.orbital:"
+        #print "----------------------------"
+        #print self.orbital
         
         return self.orbital
 
