@@ -10,6 +10,7 @@ from mpop import CONFIG_PATH
 import pyresample
 import datetime
 from time import gmtime
+from copy import deepcopy
 
 import logging
 LOG = logging.getLogger(__name__)
@@ -75,7 +76,7 @@ def load(satscene, *args, **kwargs):
    
     # Read TRTcells
     print "... read TRT cells from file: " + filename
-    satscene.traj_IDs, satscene.TRTcells, satscene['TRTcells'] = readRdt(filename, **kwargs)
+    satscene.traj_IDs, satscene.TRTcells, satscene['TRTcells'] = readRdt(filename, time_slot=satscene.time_slot, **kwargs)
 
 
 # ----------------------------------------------------------------------------------------------
@@ -112,6 +113,8 @@ class TRTcell:
     RANK=[]     # 0        [rank as integer, better use RANKr]
     Dvel_x=[]   # 0.58     [change of zonal velocity in km/h / 15min] 
     Dvel_y=[]   # 3.17     [change of meridional velocity in km/h / 15min]                                                            
+    pysteps_Dx=[] # 3.17   [pysteps displacement in x for one time step of 5min]
+    pysteps_Dy=[] # 3.17   [pysteps displacement in y for one time step of 5min]
     # cell_contour_lon_lat=[] # 6.3680; 46.9506;  6.3684; 46.9326;  6.3554; 46.9235;  6.3558; 46.9055;  6.3429; 46.8964;  6.3438; 46.8514; 
     #                         # [(lon, lat) pairs of the contour]   
     # def f(self):
@@ -123,7 +126,16 @@ class TRTcell:
 
 # input 
 # file           [string]   input file name, e.g. "/srn/data/TRTC/CZC1510916200T.trt"
-def readRdt(filename, **kwargs):
+#
+# optional arguments:
+# * cell
+#   read only a cell with a specific TRT id
+#   cell="2018080710450054"
+# * min_rank
+#   read only cell with a specific minimum rank [0,40]
+#   e.g. min_rank=8
+
+def readRdt(filename, time_slot=None, **kwargs):
 
     from os import stat
     from numpy import zeros, rot90, floor
@@ -147,6 +159,13 @@ def readRdt(filename, **kwargs):
     else:
         print "... read all ranks"
         min_rank=int(-1)
+        
+    if 'read_pysteps' in kwargs.keys():
+        print "... read specific cell (rdt.py): ", kwargs['cell']
+        read_pysteps_motion_vectors=kwargs['read_pysteps']
+    else:
+        read_pysteps_motion_vectors=False
+        #read_pysteps_motion_vectors=True
 
     # dictionary of cells
     TRTcells = {}
@@ -156,6 +175,51 @@ def readRdt(filename, **kwargs):
     # empty masked array
     cell_mask = ma.asarray(zeros(shape=(ni,nj)))
 
+    if read_pysteps_motion_vectors:
+        from netCDF4 import Dataset
+        mv_file=time_slot.strftime("/data/COALITION2/PicturesSatellite/results_JMZ/2_input_NOSTRADAMUS_ANN/UV_precalc/%Y%m%d_RZC_disparr_UV.nc")
+        print "... read motion vector from ", mv_file
+        ncfile = Dataset(mv_file,'r')
+        
+        ps_time = ncfile.variables["time"][:]
+        ref_time = datetime.datetime(2018,8,8,0,0)
+        ps_times = np.array([ref_time + datetime.timedelta(minutes=int(tt)) for tt in ps_time])
+                
+        Dx = ncfile.variables["Dx"][:,:,:]
+        Dy = ncfile.variables["Dy"][:,:,:]
+        #Vx = ncfile.variables["Vx"][:,:,:]
+        #Vy = ncfile.variables["Vy"][:,:,:]
+        smooth_in_time=True
+        if smooth_in_time:
+            print "smooth in time"
+            Dx2 = deepcopy(Dx)
+            Dy2 = deepcopy(Dy)
+            for itt in range(1,ps_times.size-1):
+                Dx2[itt,:,:] = (Dx[itt-1,:,:]+Dx[itt,:,:]+Dx[itt+1,:,:])*(1./3.)
+            for itt in range(1,ps_times.size-1):
+                Dy2[itt,:,:] = (Dy[itt-1,:,:]+Dy[itt,:,:]+Dy[itt+1,:,:])*(1./3.)
+            Dx = Dx2
+            Dy = Dy2
+            #
+            #Vx2 = deepcopy(Vx)
+            #Vy2 = deepcopy(Vy)
+            #for itt in range(1,ps_times.size-1):
+            #    Vx2[itt,:,:] = (Vx[itt-1,:,:]+Vx[itt,:,:]+Vx[itt+1,:,:])*(1./3.)
+            #for itt in range(1,ps_times.size-1):
+            #    Vy2[itt,:,:] = (Vy[itt-1,:,:]+Vy[itt,:,:]+Vy[itt+1,:,:])*(1./3.)
+            #Vx = Vx2
+            #Vy = Vy2
+
+        it = np.where(ps_times == time_slot)[0][0]
+        #print "time index it = ", it
+            
+        print "Dx.shape", Dx.shape
+        mv_area = pyresample.utils.load_area(os.path.join(CONFIG_PATH, "areas.def"), 'ccs4')
+        from mpop.imageo.HRWimage import HRWstreamplot
+        mv_PIL_image = HRWstreamplot( -12*Dx[it,:,:], 12*Dy[it,:,:], mv_area, '', color_mode='speed', vmax=25, linewidth_max=1.2, colorbar=False) # , colorbar=False, legend=True, legend_loc=3
+        mv_PIL_image.save("mv_test.png")
+        print "display mv_test.png &"
+        
     # read data from file
     if filename != "" and stat(filename).st_size != 0:
 
@@ -218,6 +282,16 @@ def readRdt(filename, **kwargs):
                             TRTcells[data[0]].iCH = (480-floor(xCH/1000.))  # i is in the vertical direction
                             TRTcells[data[0]].jCH = floor(yCH/1000.)-255    # j is in the horizontal dir. 
 
+                            if read_pysteps_motion_vectors:
+                                TRTcells[data[0]].pysteps_Dx = Dx[it, TRTcells[data[0]].iCH, TRTcells[data[0]].jCH]
+                                TRTcells[data[0]].pysteps_Dy = Dy[it, TRTcells[data[0]].iCH, TRTcells[data[0]].jCH]
+                                #print "("+data[0]+", %3d %3d %2d) Dvel_x, Dvel_y, dx, dy = %7.3f %7.3f %7.3f %7.3f" % \
+                                #(TRTcells[data[0]].iCH, TRTcells[data[0]].jCH, TRTcells[data[0]].RANKr,\
+                                # TRTcells[data[0]].Dvel_x, TRTcells[data[0]].Dvel_y, TRTcells[data[0]].pysteps_Dx, TRTcells[data[0]].pysteps_Dy)  
+                            # else:
+                                ## use TRT motion vectors 
+                                # print "("+data[0]+") Dvel_x, Dvel_y =", TRTcells[data[0]].Dvel_x, TRTcells[data[0]].Dvel_y
+                            
                             dx=float(data[ 4])
                             dy=float(data[ 5])
                             orientation = float(data[ 6])
@@ -227,7 +301,7 @@ def readRdt(filename, **kwargs):
 
                         # cell_contour_lon_lat=traj_ID + {data[0]:data[
         file.close()
-
+                        
         # max RANK is  2014072316000004 16 44 511.0 466.0
         print "                 traj_ID        Rank Area  x0   y0"
  

@@ -41,7 +41,7 @@ def fig2img ( fig ):
     return PIL_Image.frombytes( "RGBA", ( w ,h ), buf.tostring( ) )
 
 
-def TRTimage( TRTcell_IDs, TRTcells, obj_area, minRank=8, alpha_max=1.0, plot_vel=True):
+def TRTimage( TRTcell_IDs, TRTcells, obj_area, minRank=8, alpha_max=1.0, plot_vel=True, TRTcell_ID=None, fill=True, plot_nowcast=False, Rank_predicted=None, use_TRT_velocity=True):
 
     # define size of image 
     nx = obj_area.x_size
@@ -79,23 +79,26 @@ def TRTimage( TRTcell_IDs, TRTcells, obj_area, minRank=8, alpha_max=1.0, plot_ve
 
     for cell in TRTcell_IDs:
 
-        if TRTcells[cell].RANKr > minRank:
+        if TRTcell_ID is not None:
+            if cell != TRTcell_ID:
+                continue
+            print "plot specific cell", cell
+            
+        if TRTcells[cell].RANKr >= minRank:
 
             (x0,y0) = obj_area.get_xy_from_lonlat(TRTcells[cell].lon, TRTcells[cell].lat, outside_error=False, return_int=False)
             y0 = (obj_area.y_size-1)-y0
             # print (x0,y0)
 
-            vx = TRTcells[cell].vel_x
-            vy = TRTcells[cell].vel_y
-   
-            # !!!scaling of width and height is not correct, that is on map projection, but not on the ground!!!
-            e = Ellipse( xy     =  (x0, y0),                           \
-                         width  =  2*TRTcells[cell].ell_S / pixel_size_x_km, \
-                         height =  2*TRTcells[cell].ell_L / pixel_size_y_km, \
-                         angle  = -TRTcells[cell].angle )
-            
-            ax.add_artist(e)
-            e.set_clip_box(ax.bbox)
+            # get cell velocity either from TRT or pysteps
+            if use_TRT_velocity:
+                vx = TRTcells[cell].vel_x
+                vy = TRTcells[cell].vel_y
+            else:
+                vx =  -12*TRTcells[cell].pysteps_Dx
+                vy =   12*TRTcells[cell].pysteps_Dy
+            #print "%s %10.7f %10.7f" % (cell, vx, vy)
+                
             
             if TRTcells[cell].RANKr <= 12:
                 cell_color="white"
@@ -113,12 +116,59 @@ def TRTimage( TRTcell_IDs, TRTcells, obj_area, minRank=8, alpha_max=1.0, plot_ve
                 cell_color="red"
                 alpha = alpha_max
             # print "cell ID: %s, cell rank: %2d, cell_color:%7s, alpha = %4.1f" % (cell, TRTcells[cell].RANKr, cell_color, alpha)
+
+            
+            # plot first the nowcast and later the actual cell (above)
+            if plot_nowcast:
+                if Rank_predicted is None:
+                    edgecolors = [cell_color for i in range(10)]
+                else:
+                    edgecolors = ["" for i in range(10)]
+                    for i in range(10):
+                        if Rank_predicted[i]*10. <= 12:
+                            edgecolors[i]="white"
+                        elif Rank_predicted[i]*10. <= 15:
+                            edgecolors[i]="white"
+                        elif Rank_predicted[i]*10. <= 25:
+                            edgecolors[i]="green"
+                        elif Rank_predicted[i]*10. <= 35:
+                            edgecolors[i]="yellow"
+                        else:
+                            edgecolors[i]="red"
+
+                # plot 45min nowcast first (lowest) and short term forecasts above 
+                for it in range(9,0,-1):
+                    e = Ellipse( xy     =  (x0+it*(5./60.)*vx,y0+it*(5./60.)*vy),    \
+                                 width  =  2*TRTcells[cell].ell_S / pixel_size_x_km, \
+                                 height =  2*TRTcells[cell].ell_L / pixel_size_y_km, \
+                                 angle  = -TRTcells[cell].angle, \
+                                 fill=False, edgecolor=edgecolors[it] )
+                    ax.add_artist(e)
+                    e.set_clip_box(ax.bbox)
+                    #e.set_alpha(alpha)       # transparency: 0.0 transparent, 1 total visible  
+            
+            if fill:
+                edgecolor = 'black'
+            else:
+                edgecolor = cell_color
+            
+            # !!!scaling of width and height is not correct, that is on map projection, but not on the ground!!!
+            e = Ellipse( xy     =  (x0, y0),                           \
+                         width  =  2*TRTcells[cell].ell_S / pixel_size_x_km, \
+                         height =  2*TRTcells[cell].ell_L / pixel_size_y_km, \
+                         angle  = -TRTcells[cell].angle, \
+                         fill=fill, edgecolor=edgecolor )
+            
+            ax.add_artist(e)
+            e.set_clip_box(ax.bbox)
+            
             e.set_alpha(alpha)       # transparency: 0.0 transparent, 1 total visible  
             e.set_facecolor(cell_color)  # "white" or [1,1,1]
+            
 
             if plot_vel:
                 ax.arrow(x0, y0, vx, vy, head_width = head_width, head_length = head_length, fc=cell_color, ec=cell_color)
-
+                    
     if 1==1:
         # print " !!! convert fig to image by function fig2img !!!"
         ### this would avoid saving into a file, but it fills the transparent areas with "white"
