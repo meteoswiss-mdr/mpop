@@ -115,11 +115,11 @@ class VisirCompositer(Compositer):
 
         Linear stretch without clipping is applied.
         """
-        self.check_channels(0.635, 0.85, 10.8)
+        self.check_channels('VIS006', 'VIS008', 'IR_108')
 
-        ch1 = self[0.635].check_range()
-        ch2 = self[0.85].check_range()
-        ch3 = -self[10.8].data
+        ch1 = self['VIS006'].check_range()
+        ch2 = self['VIS008'].check_range()
+        ch3 = -self['IR_108'].data
 
         img = geo_image.GeoImage((ch1, ch2, ch3),
                                  self.area,
@@ -134,22 +134,22 @@ class VisirCompositer(Compositer):
 
         return img
 
-    overview.prerequisites = set([0.635, 0.85, 10.8])
+    overview.prerequisites = set(['VIS006', 'VIS008', 'IR_108'])
 
     # def overview_sun(self, stretch='crude', gamma=1.6):
     def overview_sun(self, stretch='linear', gamma=1.6, fill_value=(0, 0, 0)):
         """Make an overview RGB image composite normalising with cosine to the
         sun zenith angle.
         """
-        self.check_channels(0.635, 0.85, 10.8)
+        self.check_channels('VIS006', 'VIS008', 'IR_108')
 
-        lonlats = self[10.8].area.get_lonlats()
+        lonlats = self['IR_108'].area.get_lonlats()
 
-        red = self[0.635].sunzen_corr(self.time_slot, lonlats, limit=88.,
+        red = self['VIS006'].sunzen_corr(self.time_slot, lonlats, limit=88.,
                                       sunmask=95).data
-        green = self[0.85].sunzen_corr(self.time_slot, lonlats, limit=88.,
+        green = self['VIS008'].sunzen_corr(self.time_slot, lonlats, limit=88.,
                                        sunmask=95).data
-        blue = -self[10.8].data
+        blue = -self['IR_108'].data
 
         img = geo_image.GeoImage((red, green, blue),
                                  self.area,
@@ -164,7 +164,7 @@ class VisirCompositer(Compositer):
 
         return img
 
-    overview_sun.prerequisites = set([0.635, 0.85, 10.8])
+    overview_sun.prerequisites = set(['VIS006', 'VIS008', 'IR_108'])
 
     def night_overview(self, stretch='histogram', gamma=None):
         """Make an overview RGB image composite using IR channels.
@@ -183,7 +183,7 @@ class VisirCompositer(Compositer):
         """
         return self.cloudtop(stretch, gamma)
 
-    night_overview.prerequisites = set([3.75, 10.8, 12.0])
+    night_overview.prerequisites = set(['IR_039', 'IR_108', 'IR_120'])
 
     def natural(self, stretch=None, gamma=1.8, fill_value=(0, 0, 0)):
         """Make a Natural Colors RGB image composite.
@@ -198,11 +198,11 @@ class VisirCompositer(Compositer):
         | VIS0.6             | 0 - 90             | gamma 1.8          |
         +--------------------+--------------------+--------------------+
         """
-        self.check_channels(0.635, 0.85, 1.63)
+        self.check_channels('VIS006', 'VIS008', 'IR_016')
 
-        ch1 = self[1.63].check_range()
-        ch2 = self[0.85].check_range()
-        ch3 = self[0.635].check_range()
+        ch1 = self['IR_016'].check_range()
+        ch2 = self['VIS008'].check_range()
+        ch3 = self['VIS006'].check_range()
 
         img = geo_image.GeoImage((ch1, ch2, ch3),
                                  self.area,
@@ -220,7 +220,7 @@ class VisirCompositer(Compositer):
 
         return img
 
-    natural.prerequisites = set([0.635, 0.85, 1.63])
+    natural.prerequisites = set(['VIS006', 'VIS008', 'IR_016'])
 
     def airmass(self, fill_value=(0, 0, 0)):
         """Make an airmass RGB image composite.
@@ -235,11 +235,11 @@ class VisirCompositer(Compositer):
         | WV6.2              |   243 to 208 K     | gamma 1            |
         +--------------------+--------------------+--------------------+
         """
-        self.check_channels(6.7, 7.3, 9.7, 10.8)
+        self.check_channels('WV_062', 'WV_073', 'IR_097', 'IR_108')
 
-        ch1 = self[6.7].data - self[7.3].data
-        ch2 = self[9.7].data - self[10.8].data
-        ch3 = self[6.7].data
+        ch1 = self['WV_062'].data - self['WV_073'].data
+        ch2 = self['IR_097'].data - self['IR_108'].data
+        ch3 = self['WV_062'].data
 
         img = geo_image.GeoImage((ch1, ch2, ch3),
                                  self.area,
@@ -251,7 +251,7 @@ class VisirCompositer(Compositer):
                                          (243, 208)))
         return img
 
-    airmass.prerequisites = set([6.7, 7.3, 9.7, 10.8])
+    airmass.prerequisites = set(['WV_062', 'WV_073', 'IR_097', 'IR_108'])
 
     def vis06(self):
         """Make a black and white image of the VIS 0.635um channel.
@@ -260,7 +260,7 @@ class VisirCompositer(Compositer):
         """
         return self.channel_image(0.6)
 
-    vis06.prerequisites = set([0.635])
+    vis06.prerequisites = set(['VIS006'])
 
     def ir108(self):
         """Make a black and white image of the IR 10.8um channel.
@@ -268,9 +268,9 @@ class VisirCompositer(Compositer):
         Channel is inverted. Temperature range from -70 °C (white) to
         +57.5 °C (black) is shown.
         """
-        self.check_channels(10.8)
+        self.check_channels('IR_108')
 
-        img = geo_image.GeoImage(self[10.8].data,
+        img = geo_image.GeoImage(self['IR_108'].data,
                                  self.area,
                                  self.time_slot,
                                  fill_value=0,
@@ -279,7 +279,7 @@ class VisirCompositer(Compositer):
         img.enhance(inverse=True)
         return img
 
-    ir108.prerequisites = set([10.8])
+    ir108.prerequisites = set(['IR_108'])
 
     def wv_high(self):
         """Make a black and white image of the IR 6.7um channel.
@@ -287,9 +287,9 @@ class VisirCompositer(Compositer):
         Channel inverted and a linear stretch is applied with 0.5 %
         clipping at both ends.
         """
-        self.check_channels(6.7)
+        self.check_channels('WV_062')
 
-        img = geo_image.GeoImage(self[6.7].data,
+        img = geo_image.GeoImage(self['WV_062'].data,
                                  self.area,
                                  self.time_slot,
                                  fill_value=0,
@@ -297,7 +297,7 @@ class VisirCompositer(Compositer):
         img.enhance(inverse=True, stretch="linear")
         return img
 
-    wv_high.prerequisites = set([6.7])
+    wv_high.prerequisites = set(['WV_062'])
 
     def wv_low(self):
         """Make a black and white image of the IR 7.3um channel.
@@ -305,9 +305,9 @@ class VisirCompositer(Compositer):
         Channel data inverted and a linear stretch is applied with 0.5
         % clipping at both ends.
         """
-        self.check_channels(7.3)
+        self.check_channels('WV_073')
 
-        img = geo_image.GeoImage(self[7.3].data,
+        img = geo_image.GeoImage(self['WV_073'].data,
                                  self.area,
                                  self.time_slot,
                                  fill_value=0,
@@ -315,7 +315,7 @@ class VisirCompositer(Compositer):
         img.enhance(inverse=True, stretch="linear")
         return img
 
-    wv_low.prerequisites = set([7.3])
+    wv_low.prerequisites = set(['WV_073'])
 
     def green_snow(self, fill_value=(0, 0, 0)):
         """Make a Green Snow RGB image composite.
@@ -332,11 +332,11 @@ class VisirCompositer(Compositer):
 
         Linear stretch without clipping.
         """
-        self.check_channels(0.635, 1.63, 10.8)
+        self.check_channels('VIS006', 'IR_016', 'IR_108')
 
-        ch1 = self[1.63].check_range()
-        ch2 = self[0.635].check_range()
-        ch3 = -self[10.8].data
+        ch1 = self['IR_016'].check_range()
+        ch2 = self['VIS006'].check_range()
+        ch3 = -self['IR_108'].data
 
         img = geo_image.GeoImage((ch1, ch2, ch3),
                                  self.area,
@@ -349,7 +349,7 @@ class VisirCompositer(Compositer):
 
         return img
 
-    green_snow.prerequisites = set([0.635, 1.63, 10.8])
+    green_snow.prerequisites = set(['VIS006', 'IR_016', 'IR_108'])
 
     def red_snow(self, fill_value=(0, 0, 0)):
         """Make a Red Snow RGB image composite.
@@ -366,11 +366,11 @@ class VisirCompositer(Compositer):
 
         Linear stretch without clipping.
         """
-        self.check_channels(0.635, 1.63, 10.8)
+        self.check_channels('VIS006', 'IR_016', 'IR_108')
 
-        ch1 = self[0.635].check_range()
-        ch2 = self[1.63].check_range()
-        ch3 = -self[10.8].data
+        ch1 = self['VIS006'].check_range()
+        ch2 = self['IR_016'].check_range()
+        ch3 = -self['IR_108'].data
 
         img = geo_image.GeoImage((ch1, ch2, ch3),
                                  self.area,
@@ -382,7 +382,7 @@ class VisirCompositer(Compositer):
 
         return img
 
-    red_snow.prerequisites = set([0.635, 1.63, 10.8])
+    red_snow.prerequisites = set(['VIS006', 'IR_016', 'IR_108'])
 
     def convection(self, fill_value=(0, 0, 0)):
         """Make a Severe Convection RGB image composite.
@@ -397,11 +397,11 @@ class VisirCompositer(Compositer):
         | IR1.6 - VIS0.6     |    -70 to 20 %     | gamma 1            |
         +--------------------+--------------------+--------------------+
         """
-        self.check_channels(0.635, 1.63, 3.75, 6.7, 7.3, 10.8)
+        self.check_channels('VIS006', 'IR_016', 'IR_039', 'WV_062', 'WV_073', 'IR_108')
 
-        ch1 = self[6.7].data - self[7.3].data
-        ch2 = self[3.75].data - self[10.8].data
-        ch3 = self[1.63].check_range() - self[0.635].check_range()
+        ch1 = self['WV_062'].data - self['WV_073'].data
+        ch2 = self['IR_039'].data - self['IR_108'].data
+        ch3 = self['IR_016'].check_range() - self['VIS006'].check_range()
 
         img = geo_image.GeoImage((ch1, ch2, ch3),
                                  self.area,
@@ -414,7 +414,7 @@ class VisirCompositer(Compositer):
 
         return img
 
-    convection.prerequisites = set([0.635, 1.63, 3.75, 6.7, 7.3, 10.8])
+    convection.prerequisites = set(['VIS006', 'IR_016', 'IR_039', 'WV_062', 'WV_073', 'IR_108'])
 
     def dust(self, fill_value=(0, 0, 0)):
         """Make a Dust RGB image composite.
@@ -429,11 +429,11 @@ class VisirCompositer(Compositer):
         | IR10.8             |   261 to 289 K     | gamma 1            |
         +--------------------+--------------------+--------------------+
         """
-        self.check_channels(8.7, 10.8, 12.0)
+        self.check_channels('IR_087', 'IR_108', 'IR_120')
 
-        ch1 = self[12.0].data - self[10.8].data
-        ch2 = self[10.8].data - self[8.7].data
-        ch3 = self[10.8].data
+        ch1 = self['IR_120'].data - self['IR_108'].data
+        ch2 = self['IR_108'].data - self['IR_087'].data
+        ch3 = self['IR_108'].data
         img = geo_image.GeoImage((ch1, ch2, ch3),
                                  self.area,
                                  self.time_slot,
@@ -447,7 +447,7 @@ class VisirCompositer(Compositer):
 
         return img
 
-    dust.prerequisites = set([8.7, 10.8, 12.0])
+    dust.prerequisites = set(['IR_087', 'IR_108', 'IR_120'])
 
     def ash(self, fill_value=(0, 0, 0)):
         """Make a Ash RGB image composite.
@@ -462,11 +462,11 @@ class VisirCompositer(Compositer):
         | IR10.8             |   243 to 303 K     | gamma 1            |
         +--------------------+--------------------+--------------------+
         """
-        self.check_channels(8.7, 10.8, 12.0)
+        self.check_channels('IR_087', 'IR_108', 'IR_120')
 
-        ch1 = self[12.0].data - self[10.8].data
-        ch2 = self[10.8].data - self[8.7].data
-        ch3 = self[10.8].data
+        ch1 = self['IR_120'].data - self['IR_108'].data
+        ch2 = self['IR_108'].data - self['IR_087'].data
+        ch3 = self['IR_108'].data
         img = geo_image.GeoImage((ch1, ch2, ch3),
                                  self.area,
                                  self.time_slot,
@@ -478,7 +478,7 @@ class VisirCompositer(Compositer):
 
         return img
 
-    ash.prerequisites = set([8.7, 10.8, 12.0])
+    ash.prerequisites = set(['IR_087', 'IR_108', 'IR_120'])
 
     def fog(self, fill_value=(0, 0, 0)):
         """Make a Fog RGB image composite.
@@ -493,11 +493,11 @@ class VisirCompositer(Compositer):
         | IR10.8             |   243 to 283 K     | gamma 1            |
         +--------------------+--------------------+--------------------+
         """
-        self.check_channels(8.7, 10.8, 12.0)
+        self.check_channels('IR_087', 'IR_108', 'IR_120')
 
-        ch1 = self[12.0].data - self[10.8].data
-        ch2 = self[10.8].data - self[8.7].data
-        ch3 = self[10.8].data
+        ch1 = self['IR_120'].data - self['IR_108'].data
+        ch2 = self['IR_108'].data - self['IR_087'].data
+        ch3 = self['IR_108'].data
         img = geo_image.GeoImage((ch1, ch2, ch3),
                                  self.area,
                                  self.time_slot,
@@ -511,7 +511,7 @@ class VisirCompositer(Compositer):
 
         return img
 
-    fog.prerequisites = set([8.7, 10.8, 12.0])
+    fog.prerequisites = set(['IR_087', 'IR_108', 'IR_120'])
 
     def night_fog(self, fill_value=(0, 0, 0)):
         """Make a Night Fog RGB image composite.
@@ -526,11 +526,11 @@ class VisirCompositer(Compositer):
         | IR10.8             |   243 to 293 K     | gamma 1            |
         +--------------------+--------------------+--------------------+
         """
-        self.check_channels(3.75, 10.8, 12.0)
+        self.check_channels('IR_039', 'IR_108', 'IR_120')
 
-        ch1 = self[12.0].data - self[10.8].data
-        ch2 = self[10.8].data - self[3.75].data
-        ch3 = self[10.8].data
+        ch1 = self['IR_120'].data - self['IR_108'].data
+        ch2 = self['IR_108'].data - self['IR_039'].data
+        ch3 = self['IR_108'].data
 
         img = geo_image.GeoImage((ch1, ch2, ch3),
                                  self.area,
@@ -545,7 +545,7 @@ class VisirCompositer(Compositer):
 
         return img
 
-    night_fog.prerequisites = set([3.75, 10.8, 12.0])
+    night_fog.prerequisites = set(['IR_039', 'IR_108', 'IR_120'])
 
     def cloudtop(self, stretch=(0.005, 0.005), gamma=None, fill_value=(0, 0, 0)):
         """Make a Cloudtop RGB image composite.
@@ -562,11 +562,11 @@ class VisirCompositer(Compositer):
 
         Linear stretch with 0.5 % clipping at both ends.
         """
-        self.check_channels(3.75, 10.8, 12.0)
+        self.check_channels('IR_039', 'IR_108', 'IR_120')
 
-        ch1 = -self[3.75].data
-        ch2 = -self[10.8].data
-        ch3 = -self[12.0].data
+        ch1 = -self['IR_039'].data
+        ch2 = -self['IR_108'].data
+        ch3 = -self['IR_120'].data
 
         img = geo_image.GeoImage((ch1, ch2, ch3),
                                  self.area,
@@ -581,6 +581,6 @@ class VisirCompositer(Compositer):
 
         return img
 
-    cloudtop.prerequisites = set([3.75, 10.8, 12.0])
+    cloudtop.prerequisites = set(['IR_039', 'IR_108', 'IR_120'])
 
 # pylint: enable=W0612
