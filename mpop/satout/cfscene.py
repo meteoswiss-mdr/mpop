@@ -285,6 +285,7 @@ class CFScene(object):
                                        lons.info["var_name"])
                 xy_names = ["y" + str_arc, "x" + str_arc]
 
+            chn.info['units'] = 'K'
             if (area_aggregation and not time_dimension and
                     (chn.area, chn.info['units']) in area_units and concatenate_bands):
 
@@ -452,10 +453,10 @@ def geos2cf(proj_dict):
 
     return {"grid_mapping_name": "geostationary",
             "latitude_of_projection_origin": 0.0,
-            "longitude_of_projection_origin": eval(proj_dict["lon_0"]),
-            "semi_major_axis": eval(proj_dict["a"]),
-            "semi_minor_axis": eval(proj_dict["b"]),
-            "perspective_point_height": eval(proj_dict["h"])
+            "longitude_of_projection_origin": eval(str(proj_dict["lon_0"])),
+            "semi_major_axis": eval(str(proj_dict["a"])),
+            "semi_minor_axis": eval(str(proj_dict["b"])),
+            "perspective_point_height": eval(str(proj_dict["h"]))
             }
 
 
@@ -480,15 +481,15 @@ def somerc2cf(proj_dict):
 
     new_dict = {}
     new_dict["grid_mapping_name"] = "swiss_oblique_mercator"
-    new_dict["latitude_of_projection_origin"]  = eval(proj_dict["lat_0"])
-    new_dict["longitude_of_projection_origin"] = eval(proj_dict["lon_0"])
+    new_dict["latitude_of_projection_origin"]  = eval(str(proj_dict["lat_0"]))
+    new_dict["longitude_of_projection_origin"] = eval(str(proj_dict["lon_0"]))
     new_dict["ellipsoid"]                      = proj_dict["ellps"]
     if "x_0" in proj_dict:
-        new_dict["false_easting"] = eval(proj_dict.get("x_0", "0"))
+        new_dict["false_easting"] = eval(str(proj_dict.get("x_0", "0")))
     if "y_0" in proj_dict:
-        new_dict["false_northing"] = eval(proj_dict.get("y_0", "0"))
+        new_dict["false_northing"] = eval(str(proj_dict.get("y_0", "0")))
     if "k_0" in proj_dict:
-        new_dict["scale_factor_at_projection_origin"] = eval(proj_dict.get("k_0", "1.0"))
+        new_dict["scale_factor_at_projection_origin"] = eval(str(proj_dict.get("k_0", "1.0")))
             
     return new_dict
 

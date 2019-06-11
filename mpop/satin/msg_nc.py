@@ -33,6 +33,8 @@ def load(satscene, **kwargs):
             reader_level = kwargs["reader_level"]
         else:
             reader_level = "seviri-level8"
+    else:
+        reader_level = "seviri-level8"
     print "... use reader_level:", reader_level
                 
     # assume this is reader_level seviri-level8
@@ -52,13 +54,22 @@ def load(satscene, **kwargs):
     # Load data from netCDF file
     ncfile = Dataset(filename,'r')
         
-    # area is set fixed to ccs4 
-    # !!! BAD: THIS INFORMATION SHOULD BE SAVED IN THE FILE !!!
+    # !!! BAD: THIS INFORMATION SHOULD BE READ FROM THE FILE !!!
+    #       int64 grid_mapping_0 ;
+    #            grid_mapping_0:ellipsoid = "bessel" ;
+    #            grid_mapping_0:false_easting = 600000LL ;
+    #            grid_mapping_0:false_northing = 200000LL ;
+    #            grid_mapping_0:grid_mapping_name = "swiss_oblique_mercator" ;
+    #            grid_mapping_0:latitude_of_projection_origin = 46.9524055555556 ;
+    #            grid_mapping_0:longitude_of_projection_origin = 7.43958333333333 ;
+    #            grid_mapping_0:scale_factor_at_projection_origin = 1LL ;
+    #            grid_mapping_0:units = "m" ;
+    # !!! CURRENTLY: area is set fixed to ccs4     
     area = 'ccs4'
     area_def = get_area_def(area)
     print "... set area to ", area 
     #satscene.area = area_def
-        
+    
     for chn_name in satscene.channels_to_load:
         #print '    load ', chn_name
         

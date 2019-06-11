@@ -58,11 +58,15 @@ def load(satscene, *args, **kwargs):
         # Load data from file
         # filename = "/home/lom/users/cll/pytroll/radar/RZC143081530F2.801.gif"
         # EZC151280555F2.815.gif  EZC151280555F2.820.gif  EZC151280555F2.845.gif  EZC151280555F2.850.gif
+        # EZC181501700VL.815      EZC151280555F2.820      EZC151280555F2.845      EZC151280555F2.850
 
         # specify dBZ threshold for ECHO TOP
         if values["product"] == 'EZC':
+            #chn_name='EchoTOP15'
             top=chn_name.replace("'", "").replace('"', '')[-2:]
-            filename=filename[:-6]+top+filename[-4:]
+            print "ECHOTOP", top
+            #%(product)s%y%j%H%M??.???*
+            filename=filename[:-3]+top+filename[-1:]
 
         print "... search for file: ", filename
         filenames=glob.glob(str(filename))
@@ -105,16 +109,36 @@ def load(satscene, *args, **kwargs):
             sys.path.insert(0, '/opt/users/hau/PyTroll/packages/mpop/mpop/satin/metranet')
             import metranet
             ret = metranet.read_file(str(filename), physic_value=True)
-            print 'metranet: swissradar.py (min/max):', ret.data.min(), ret.data.max()
+            #print dir(ret)
+            ## ['__doc__', '__init__', '__module__', 'data', 'header', 'moment', 'pol_header', 'scale', 'type']
+            #print ret.__doc__
+            #print ret.header
+            ##{u'usr_radar_required': u'ADLPW', u'data_unit': u'kg/m2', u'pid': u'LZC', u'table_endianness': u'big',
+            ## u'usr_quality': u'55555', u'total_sweep': u'20', u'usr_visib_upper': u'200', u'rect_yres': u'1.000000',
+            ## u'quality': u'77777', u'table_size': u'1024', u'data_width': u'0.499998', u'volume_time': u'1527696000',
+            ## u'p_ver': u'1.0.2', u'table_num': u'1', u'compressed_bytes': u'8044', u'usr_zwB': u'0.57', u'usr_zwA': u'3.44',
+            ## 'row': u'640', u't_ver': u'2.4.3.24 Oct  9 2017', u'usr_visib_lower': u'50', u'product': u'VIL', u'data_type': u'BYTE',
+            ## u'format': u'RECT', u'moment': u'UZ', u'uncompressed_bytes': u'454400', u'data_bits': u'8', u'usr_max_dbz': u'57.00',
+            ## u'a_ver': u'1.0.0', u'usr_speckle_filt': u'0', u'radar': u'ADLPW', 'column': u'710', u'usr_min_height': u'1.50',
+            ## u'rect_xres': u'1.000000', u'table_name': u'8bit_metranet_vil_0.5res', u'time': u'1815016000'}
+            #print type(ret.data)
+            ##<type 'numpy.ndarray'>
+            print 'metranet B: swissradar.py (min/max):', np.nanmin(ret.data), np.nanmax(ret.data)
             
             from numpy.ma import masked_invalid, masked_where
             radar_data_masked=masked_invalid(ret.data)
-            radar_data_masked=masked_where(radar_data_masked==0,radar_data_masked)
+            radar_data_masked=np.nan_to_num(radar_data_masked)  # replace nan with 0, and inf with large number 
+            radar_data_masked=masked_where(radar_data_masked==0,     radar_data_masked)
+            radar_data_masked=masked_where(radar_data_masked==9999.0,radar_data_masked)
+            ##radar_data_masked=masked_where(radar_data_masked<0.05, radar_data_masked)
+            radar_data_masked.mask = (radar_data_masked >= 9999.0) | (radar_data_masked <= 0.5)
+            print type(radar_data_masked)
     
-        print 'swissradar.py (min/max):', radar_data_masked.min(), radar_data_masked.max()
+        #print 'swissradar.py (min/max):', radar_data_masked.min(), radar_data_masked.max()
 
         # save data in satscene class according to channel name
         satscene[chn_name] = radar_data_masked
+        #satscene[chn_name] = ret.data
 
         # save 3 letter radar product name 
         satscene[chn_name].product_name = values["product"]
@@ -123,8 +147,8 @@ def load(satscene, *args, **kwargs):
         #satscene.area = pyresample.utils.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
         satscene[chn_name].area = pyresample.utils.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
 
-        # save units
-        satscene[chn_name].units = units
+        # copy units from metranet header to pytroll object
+        satscene[chn_name].units = ret.header['data_unit']
 
 def convertToValue(im, scale):
     rgb_im = im.convert('RGB')

@@ -40,6 +40,7 @@ import logging
 import numpy as np
 from pyresample import image, utils, geometry, kd_tree
 from pyresample.bilinear import get_sample_from_bil_info, get_bil_info
+from pyresample.area_config import AreaNotFound
 try:
     from pyresample.ewa import ll2cr, fornav
 except ImportError:
@@ -77,7 +78,8 @@ def get_area_def(area_name):
     is to be placed in the $PPP_CONFIG_DIR directory, and its name is defined
     in mpop's configuration file.
     """
-    return utils.parse_area_file(get_area_file(), area_name)[0]
+    from pyresample import parse_area_file
+    return parse_area_file(get_area_file(), area_name)[0]
 
 
 def _get_area_hash(area):
@@ -195,13 +197,13 @@ class Projector(object):
         try:
             self.in_area, in_id = get_area_and_id(area, latlons=latlons)
         except TypeError:
-            raise utils.AreaNotFound("Input area " +
-                                     str(area) +
-                                     " must be defined in " +
-                                     self.area_file +
-                                     ", be an area object"
-                                     " or longitudes/latitudes must be "
-                                     "provided.")
+            raise AreaNotFound("Input area " +
+                               str(area) +
+                               " must be defined in " +
+                               self.area_file +
+                               ", be an area object"
+                               " or longitudes/latitudes must be "
+                               "provided.")
 
         return in_id
 
@@ -210,11 +212,11 @@ class Projector(object):
         try:
             self.out_area, out_id = get_area_and_id(area, latlons=latlons)
         except AttributeError:
-            raise utils.AreaNotFound("Output area " +
-                                     str(area) +
-                                     " must be defined in " +
-                                     self.area_file + " or "
-                                     "be an area object.")
+            raise AreaNotFound("Output area " +
+                               str(area) +
+                               " must be defined in " +
+                               self.area_file + " or "
+                               "be an area object.")
         return out_id
 
     def save(self, resave=False):
@@ -390,7 +392,7 @@ def get_area_and_id(area, latlons=None):
     try:
         area_def = get_area_def(area)
         area_id = area
-    except (utils.AreaNotFound, AttributeError):
+    except (AreaNotFound, AttributeError):
         try:
             area_id = area.area_id
             area_def = area

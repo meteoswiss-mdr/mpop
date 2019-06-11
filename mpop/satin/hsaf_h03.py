@@ -23,6 +23,9 @@ import numpy.ma as ma
 from glob import glob
 import datetime
 
+from mpop.utils import get_logger
+LOG = get_logger('satin/hsaf_h03')
+
 def find_hsaf_files(time_slot, fullname):
 
     # Read config file content
@@ -76,8 +79,10 @@ def load(satscene, **kargs):
 
     filenames = find_hsaf_files(satscene.time_slot, satscene.fullname)
     if len(filenames) == 0:
-        print "*** Error, no HSAF input file found, cannot load."
-        raise IOError("Error, no HSAF input file found, cannot load.")
+        print "*** Warning, no HSAF input file found, cannot load."
+        #raise IOError("Error, no HSAF input file found, cannot load.")
+        LOG.warning("Warning, no HSAF input file found, cannot load.")
+        return -1
     else:
         if len(filenames) > 1:
             print "*** Warning, more than 1 HSAF input data file found, choose first one: ", filenames[0]
