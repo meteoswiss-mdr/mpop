@@ -45,7 +45,7 @@ def load(satscene, **kwargs):
     filenames=glob(str(filename))
     if len(filenames) == 0:
         print "*** Error, no file found"
-        quit()
+        return -1
     elif len(filenames) > 1:
         print "*** Warning, more than 1 datafile found: ", filenames 
     filename = filenames[0]

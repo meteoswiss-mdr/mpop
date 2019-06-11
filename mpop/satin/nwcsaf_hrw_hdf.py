@@ -335,6 +335,7 @@ def load(satscene, calibrate=True, area_extent=None, read_basic_or_detailed='bot
     else:
         print "*** Error, no file found"
         print ""
+        return -1
         sat_ID = "no file"
         # but we continue the program in order to add an empty channel below 
 
