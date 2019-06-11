@@ -40,7 +40,6 @@ def load(satscene, *args, **kwargs):
         for i in xrange(9):
             radar_product='radar-{0:1d}'.format(i+1)
             prod_name = conf.get(radar_product, "name")
-            print prod_name, chn_name
             if prod_name.replace("'", "").replace('"', '') == chn_name.replace("'", "").replace('"', ''):
                 values["product"]=conf.get(radar_product, "product_name").replace("'", "").replace('"', '')
                 if verbose:
@@ -49,24 +48,38 @@ def load(satscene, *args, **kwargs):
                 if verbose:
                     print '... read scale from: ', scale
                 units = conf.get(radar_product, "units").replace("'", "").replace('"', '')
+                print chn_name, units
                 break
 
         filename = os.path.join(
             satscene.time_slot.strftime(conf.get("radar-level2", "dir", raw=True)) % values,
             satscene.time_slot.strftime(conf.get("radar-level2", "filename", raw=True)) % values)
 
-        # Load data from file
-        # filename = "/home/lom/users/cll/pytroll/radar/RZC143081530F2.801.gif"
+        # Load data from file, possible filenames 
+        # meteoswiss.radar.precip.201906071122.gif
         # EZC151280555F2.815.gif  EZC151280555F2.820.gif  EZC151280555F2.845.gif  EZC151280555F2.850.gif
         # EZC181501700VL.815      EZC151280555F2.820      EZC151280555F2.845      EZC151280555F2.850
+        # RZC143081530F2.801.gif
 
+        if filename[:10]=="meteoswiss" and values["product"] != "RZC":
+            print "*** ERROR in load (swissradar.py)"
+            print "  for near real time only the product precip (RZC) is implemented"
+            quit()
+
+        # determine the format, read data accordingly 
+        from os.path import splitext
+        file_name,extension = splitext(filename)
+            
         # specify dBZ threshold for ECHO TOP
         if values["product"] == 'EZC':
             #chn_name='EchoTOP15'
             top=chn_name.replace("'", "").replace('"', '')[-2:]
             print "ECHOTOP", top
             #%(product)s%y%j%H%M??.???*
-            filename=filename[:-3]+top+filename[-1:]
+            if extension=='.gif':
+                filename=filename[:-3]+top+filename[-1:]
+            else:
+                filename=filename[:-3]+top+filename[-1:]
 
         print "... search for file: ", filename
         filenames=glob.glob(str(filename))
@@ -74,15 +87,16 @@ def load(satscene, *args, **kwargs):
             print "*** Error, no file found"
             quit()
         elif len(filenames) > 1:
-            print "*** Warning, more than 1 datafile found: ", filenames 
+            print "*** Warning, more than 1 datafile found: ", filenames
+            ## for echotop select the correct file
+            #if values["product"] == 'EZC':
+            #    print "*** TO BE IMPLEMENTED: Choose correct file for EchoTOP", filenames                 
+            #else:
+            #    print "*** Warning, more than 1 datafile found: ", filenames 
         filename = filenames[0]
 
         print("... read data from %s" % str(filename))								 
         
-        # determine the format, read data accordingly 
-        from os.path import splitext
-        file_name,extension = splitext(filename)
-
         if extension=='.gif':
             im = Image.open(str(filename))
             #im.show()
@@ -148,8 +162,11 @@ def load(satscene, *args, **kwargs):
         satscene[chn_name].area = pyresample.utils.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
 
         # copy units from metranet header to pytroll object
-        satscene[chn_name].units = ret.header['data_unit']
-
+        if extension=='.gif':
+            satscene[chn_name].units = units
+        else:
+            satscene[chn_name].units = ret.header['data_unit']
+        
 def convertToValue(im, scale):
     rgb_im = im.convert('RGB')
     #r, g, b = rgb_im.getpixel((1, 1))
