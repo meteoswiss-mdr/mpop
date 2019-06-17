@@ -26,7 +26,7 @@ import datetime
 from mpop.utils import get_logger
 LOG = get_logger('satin/hsaf_h03')
 
-def find_hsaf_files(time_slot, fullname):
+def find_hsaf_h03_files(time_slot, fullname):
 
     # Read config file content
     conf = ConfigParser()
@@ -77,7 +77,7 @@ def load(satscene, **kargs):
     http://hsaf.meteoam.it/precipitation.php?tab=3
     """
 
-    filenames = find_hsaf_files(satscene.time_slot, satscene.fullname)
+    filenames = find_hsaf_h03_files(satscene.time_slot, satscene.fullname)
     if len(filenames) == 0:
         print "*** Warning, no HSAF input file found, cannot load."
         #raise IOError("Error, no HSAF input file found, cannot load.")

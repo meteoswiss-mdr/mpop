@@ -23,7 +23,7 @@ import numpy.ma as ma
 from glob import glob
 import datetime
 
-def find_hsaf_files(time_slot, fullname):
+def find_hsaf_h03b_files(time_slot, fullname):
 
     # Read config file content
     conf = ConfigParser()
@@ -37,25 +37,27 @@ def find_hsaf_files(time_slot, fullname):
 
     # HSAF could not decide to take end time 12, 27, 42, 57 or start time 00, 15, 30, 45 or 
     # so we search for both versions here:
-    for i_format in [0,1]:
+    for i_format in [1,0]:
         if i_format==0:
             # time stamp == end of scan time 12min after start, 12, 27, 42, 57, for most of the cases true
             end_time = time_slot + datetime.timedelta(minutes=12)
-            filepath    = end_time.strftime(conf.get("seviri-level7", "dir",raw=True))
-            filepattern = end_time.strftime(conf.get("seviri-level7", "filename",raw=True)) % values
+            filepath    = end_time.strftime(conf.get("seviri-level10", "dir",raw=True))
+            filepattern = end_time.strftime(conf.get("seviri-level10", "filename",raw=True)) % values
         else:
             # time stamp == beginning of scan time, for a period between 20170518_0745 and  20170605_1159
             #### datetime_filename_change1 = datetime.datetime(2017, 5, 18,  7, 43, 0)
             #### datetime_filename_change2 = datetime.datetime(2017, 6,  5, 11, 59, 0)
-            filepath    = time_slot.strftime(conf.get("seviri-level7", "dir",raw=True))
-            filepattern = time_slot.strftime(conf.get("seviri-level7", "filename",raw=True)) % values
+            filepath    = time_slot.strftime(conf.get("seviri-level10", "dir",raw=True))
+            filepattern = time_slot.strftime(conf.get("seviri-level10", "filename",raw=True)) % values
 
         filename_wildcards = os.path.join( filepath, filepattern)
         print "... search for file: ", filename_wildcards
         filenames = glob(str(filename_wildcards))
         
         if len(filenames) == 0:
-            print "*** Warning, no HSAF input file found, try to find file with scan start time instead of end time stamp"
+            print "*** Warning, no HSAF input file found"
+            if i_format == 0:
+                print "    try to find file with scan start time instead of end time stamp"
         else:
             if len(filenames) > 1:
                 print "*** Warning, more than 1 HSAF input data file found"
@@ -74,7 +76,7 @@ def load(satscene, **kargs):
     http://hsaf.meteoam.it/precipitation.php?tab=3
     """
 
-    filenames = find_hsaf_files(satscene.time_slot, satscene.fullname)
+    filenames = find_hsaf_h03b_files(satscene.time_slot, satscene.fullname)
     if len(filenames) == 0:
         print "*** Error, no HSAF input file found, cannot load."
         #raise IOError("Error, no HSAF input file found, cannot load.")
@@ -91,36 +93,42 @@ def load(satscene, **kargs):
 
     if 'grb' in fileformats:
         # read grib 
-        data, fill_value, units, long_name = read_h03_grib(filenames[fileformats.index('grb')])
+        data, fill_value, units, long_name = read_h03b_grib(filenames[fileformats.index('grb')])
     elif 'nc' in fileformats:
-        # read netCDF
-        data, fill_value, units, long_name = read_h03_netCDF(filenames[fileformats.index('nc')])
+        ## read netCDF
+        #data, fill_value, units, long_name = read_h03_netCDF(filenames[fileformats.index('nc')])
+        print "*** ERROR, reading netCDF for product h03b not implemented"
+        quit()
     elif 'gz' in fileformats:
         # unzip 
         from subprocess import call
         from ntpath import basename
         infile = filenames[fileformats.index('gz')]
         outfile = '/tmp/'+basename(infile[:-3])
-        print "    unzip ", infile 
+        command = "/bin/gunzip -c "+ infile+" > "+ outfile  +" 2>&1"
+        print command
         # gunzip -c h03_20150513_1557_rom.grb.gz > h03_20150513_1557_rom.grb
         # call("/bin/gunzip "+ infile                +" 2>&1", shell=True) # dont keep gz file 
-        call("/bin/gunzip -c "+ infile+" > "+ outfile  +" 2>&1", shell=True) # keep gz file 
+        call(command, shell=True) # keep gz file 
         # check format of gunziped file
         if outfile.split(".")[-1] == 'grb':
-            data, fill_value, units, long_name = read_h03_grib(outfile)
-        elif outfile.split(".")[-1] == 'nc':
-            data, fill_value, units, long_name = read_h03_netCDF(outfile)
+            data, fill_value, units, long_name = read_h03b_grib(outfile)
+        #elif outfile.split(".")[-1] == 'nc':
+        #    data, fill_value, units, long_name = read_h03_netCDF(outfile)
+        else:
+            print "*** ERROR, format not yet implemented", outfile.split(".")[-1]
+            quit()
         call("rm "+ outfile  +" 2>&1", shell=True) # delete tmporary file 
 
     if units == "kg m**-2 s**-1" or units == "kg m-2s-1" or units == "kg m-2 s-1":
         data *= 3600 
         units = "kg m-2 h-1"
         
-    satscene['h03'] = data
-    satscene['h03'].fill_value = fill_value
-    satscene['h03'].units      = units
-    satscene['h03'].long_name  = long_name
-    satscene['h03'].product_name = 'h03'
+    satscene['h03b'] = data
+    satscene['h03b'].fill_value = fill_value
+    satscene['h03b'].units      = units
+    satscene['h03b'].long_name  = long_name
+    satscene['h03b'].product_name = 'h03'
 
     # personal communication with help desk
     # Each H03 grib file contains precipitation data of a 900x1900 pixel sub-area of the SEVIRI full disk area (3712x3712 pixels). 
@@ -129,8 +137,8 @@ def load(satscene, **kargs):
     # For the future we are thinking to disseminate the h03 outputs already corrected in parallax.
 
     # conversion of above information to correct AreaDefinition 
-    # full_disk = get_area_def("SeviriDiskFull")
-    # from mpop.projector import get_area_def
+    from mpop.projector import get_area_def
+    full_disk = get_area_def("SeviriDiskFull00")
     # import numpy as np
     # np.array(area_def.get_proj_coords(data_slice=(85+900,1095     ))) - 3000.40316582 / 2.
     #    array([-2284807.01076965,  2611850.9558437 ])
@@ -139,16 +147,16 @@ def load(satscene, **kargs):
     # or 
     # aex = full_disk.get_area_extent_for_subsets(985,1095,85,2995)
 
-    proj = {'proj': 'geos', 'a': '6378169.0', 'b': '6356583.8', 'h': '35785831.0', 'lon_0': '0.0'}
-    aex =      (-2284807.01076965, 2611850.9558437,  3418959.40744847,  5315214.20824482)
+    #proj = {'proj': 'geos', 'a': '6378169.0', 'b': '6356583.8', 'h': '35785831.0', 'lon_0': '0.0'}
+    #aex =      (-2284807.01076965, 2611850.9558437,  3418959.40744847,  5315214.20824482)
 
-    from pyresample.geometry import AreaDefinition
-    hsaf_area = AreaDefinition("hsaf", "hsaf", "geos0", proj, 1900, 900, aex)
+    #from pyresample.geometry import AreaDefinition
+    #hsaf_area = AreaDefinition("hsaf_h03b", "hsaf_h03b", "geos0", proj, 1900, 900, aex)
     
-    satscene.area = hsaf_area
-    satscene['h03'].area = hsaf_area
+    satscene.area = full_disk
+    satscene['h03b'].area = full_disk
     
-def read_h03_grib(filename):
+def read_h03b_grib(filename):
 
     try:
         import pygrib
@@ -189,6 +197,7 @@ def read_h03_grib(filename):
     return data, _FillValue, units, long_name 
 
 
+### not adapted to h03b 
 def read_h03_netCDF(filename):
 
     try:
