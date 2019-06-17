@@ -600,6 +600,7 @@ class SatelliteInstrumentScene(SatelliteScene):
             # default solution: download most recent TLE
             self.orbital = Orbital(sat_line, use_NEAR_for_DEEP_space=use_NEAR_for_DEEP_space)
         else:
+            # if the processed time slot is older than 30 days, try to make use of the NORAD satellite position file  
             if ((datetime.datetime.utcnow() - self.time_slot > datetime.timedelta(days=30))):
                 orbitDir="/data/COALITION2/database/meteosat/SEVIRI/orbit"
                 NORADCatalogNumbers={"METEOSAT-8 (MSG-1)":"27509","METEOSAT-9 (MSG-2)":"28912","METEOSAT-10 (MSG-3)":"38552","METEOSAT-11 (MSG-4)":"40732"}
@@ -623,10 +624,16 @@ class SatelliteInstrumentScene(SatelliteScene):
                     print "    https://celestrak.com/NORAD/archives/request.php"
                     print "*** Continue with current TLE information"
                     self.orbital = Orbital(sat_line, use_NEAR_for_DEEP_space=use_NEAR_for_DEEP_space)
-                    
-        #print "mpop/scene.py: self.orbital:"
-        #print "----------------------------"
-        #print self.orbital
+            else:
+                # download most recent TLE file and assume that the change was small within the last 30 days ... 
+                print "and what now?!?!?"
+                print datetime.datetime.utcnow(), "------", str(self.time_slot), "------", str(datetime.timedelta(days=30))
+                # default solution: download most recent TLE
+                self.orbital = Orbital(sat_line, use_NEAR_for_DEEP_space=use_NEAR_for_DEEP_space)
+                
+        print "mpop/scene.py: self.orbital:"
+        print "----------------------------"
+        print self.orbital
         
         return self.orbital
 
