@@ -51,7 +51,7 @@ COMPRESS_LVL = 6
 
 def pcs_def_from_region(region):
     items = region.proj_dict.items()
-    return ' '.join([t[0] + '=' + t[1] for t in items])
+    return ' '.join([str(t[0]) + '=' + str(t[1]) for t in items])
 
 
 def _get_area_extent(cfac, lfac, coff, loff, numcols, numlines):

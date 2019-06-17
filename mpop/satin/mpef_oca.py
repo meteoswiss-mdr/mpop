@@ -128,7 +128,7 @@ class OCAData(mpop.channel.GenericChannel):
             self._projectables.append(field)
 
         self.timeslot = None
-        self.area_def = pr.utils.load_area(AREA_DEF_FILE, 'met09globeFull')
+        self.area_def = pr.load_area(AREA_DEF_FILE, 'met09globeFull')
         self.shape = None
 
     def readgrib(self):

@@ -162,7 +162,7 @@ def load(satscene, *args, **kwargs):
             dens_pc = lon_lat_to_dens(lons_pc.flatten(), lats_pc.flatten(), obj_area)
             satscene[chn_name] = dens_pc
             # get projection 
-            projection = pyresample.utils.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
+            projection = pyresample.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
             #print projection
             satscene.area = projection
             

@@ -109,7 +109,7 @@ def load(satscene, *args, **kwargs):
     dens, densIC, densCG, curr_abs, curr_neg, curr_pos = readLightning (filename, NEAR_REAL_TIME, satscene.time_slot, dt=dt, area=projectionName) # , form='square'
 
     # get projection 
-    projection = pyresample.utils.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
+    projection = pyresample.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
     #print projection
     satscene.area = projection
     
