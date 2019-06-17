@@ -186,7 +186,7 @@ class CFScene(object):
                     str_arc = str(area_counter)
                     area_counter += 1
                     x__ = InfoObject()
-                    chn.area.get_proj_coords(cache=True)
+                    chn.area.get_proj_coords()
                     if ( len(chn.area.projection_x_coords.shape) == 1 ):
                     	x__.data = chn.area.projection_x_coords
                     else:

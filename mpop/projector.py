@@ -40,8 +40,8 @@ import logging
 import numpy as np
 from pyresample import image, utils, geometry, kd_tree
 from pyresample.bilinear import get_sample_from_bil_info, get_bil_info
-#from pyresample.area_config import AreaNotFound
-from pyresample.utils import AreaNotFound
+from pyresample.area_config import AreaNotFound
+#from pyresample.utils import AreaNotFound
 try:
     from pyresample.ewa import ll2cr, fornav
 except ImportError:
