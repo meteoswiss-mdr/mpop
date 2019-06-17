@@ -79,8 +79,8 @@ def get_area_def(area_name):
     is to be placed in the $PPP_CONFIG_DIR directory, and its name is defined
     in mpop's configuration file.
     """
-    #from pyresample import parse_area_file
-    from pyresample.utils import parse_area_file
+    from pyresample import parse_area_file
+    #from pyresample.utils import parse_area_file
     return parse_area_file(get_area_file(), area_name)[0]
 
 
