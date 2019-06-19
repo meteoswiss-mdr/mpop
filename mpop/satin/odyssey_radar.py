@@ -213,7 +213,7 @@ def load(satscene, *args, **kwargs):
 
    # projection info
    projectionName = conf.get("radar-level2", "projection")
-   projection = pyresample.utils.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
+   projection = pyresample.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
    satscene.area = projection
 
    

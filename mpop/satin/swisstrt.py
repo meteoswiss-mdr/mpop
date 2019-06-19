@@ -72,7 +72,7 @@ def load(satscene, *args, **kwargs):
         filename = glob.glob(str(filename))[0]
 
     # get projection 
-    satscene.area = pyresample.utils.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
+    satscene.area = pyresample.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
    
     # Read TRTcells
     print "... read TRT cells from file: " + filename
@@ -214,7 +214,7 @@ def readRdt(filename, time_slot=None, **kwargs):
         #print "time index it = ", it
             
         print "Dx.shape", Dx.shape
-        mv_area = pyresample.utils.load_area(os.path.join(CONFIG_PATH, "areas.def"), 'ccs4')
+        mv_area = pyresample.load_area(os.path.join(CONFIG_PATH, "areas.def"), 'ccs4')
         from mpop.imageo.HRWimage import HRWstreamplot
         mv_PIL_image = HRWstreamplot( -12*Dx[it,:,:], 12*Dy[it,:,:], mv_area, '', color_mode='speed', vmax=25, linewidth_max=1.2, colorbar=False) # , colorbar=False, legend=True, legend_loc=3
         mv_PIL_image.save("mv_test.png")

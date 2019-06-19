@@ -158,8 +158,8 @@ def load(satscene, *args, **kwargs):
         satscene[chn_name].product_name = values["product"]
 
         # save projection / area 
-        #satscene.area = pyresample.utils.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
-        satscene[chn_name].area = pyresample.utils.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
+        #satscene.area = pyresample.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
+        satscene[chn_name].area = pyresample.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
 
         # copy units from metranet header to pytroll object
         if extension=='.gif':
