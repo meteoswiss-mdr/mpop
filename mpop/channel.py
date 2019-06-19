@@ -203,6 +203,7 @@ class Channel(GenericChannel):
             LOG.warning("Deriving the near infrared reflectance" +
                         " of a band that is outside the 3-4 micron range" +
                         " is not supported!\n\tWill do nothing...")
+            LOG.warning("self.wavelength_range[1] = " + str(self.wavelength_range[1]))
             return
 
         # Check if the sun-zenith angle was provided:
