@@ -66,6 +66,12 @@ def add_check_sum(line):
     line += str(checkSum % 10)
     return line
 
+import re
+def atoi(text):
+    return int(text) if text.isdigit() else text
+def natural_keys(text):
+    return [ atoi(c) for c in re.split('(\d+)',text) ]
+
 class Satellite(object):
 
     """This is the satellite class. It contains information on the satellite.
@@ -472,7 +478,7 @@ class SatelliteInstrumentScene(SatelliteScene):
             self.channels_to_load = set()
             return
 
-        levels.sort()
+        levels.sort(key=natural_keys)
 
         # skip level1 -> reserved for compressed HRIT
         if levels[0] == self.instrument_name + "-level1":
