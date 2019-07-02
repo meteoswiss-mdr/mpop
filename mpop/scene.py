@@ -36,6 +36,7 @@ import os.path
 import sys
 import types
 import weakref
+import re
 
 import numpy as np
 
@@ -240,7 +241,7 @@ class SatelliteInstrumentScene(SatelliteScene):
             conf.read(os.path.join(CONFIG_PATH, self.fullname + ".cfg"))
 
             for section in conf.sections():
-                if(not section[:-1].endswith("level") and
+                if(not re.sub(r'\d+$', '', section).endswith("level") and
                    not section.endswith("granules") and
                    section.startswith(self.instrument_name)):
                     name = eval(conf.get(section, "name"))
