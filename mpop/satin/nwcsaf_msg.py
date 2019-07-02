@@ -14,8 +14,9 @@
 #   Jörg Asmus <joerg.asmus@dwd.de> for CRR, PC (partly), SPhR, PCPh, CRPH
 #   Ulrich Hamann <ulrich.hamann@meteoswiss.ch> for CMa, bugfix SPhR.cape, 1st version generic class MsgNwcsafClass
 
-
 # This file is part of mpop.
+# It is the reader for NWCSAF products of the version 2013.
+# For products of the version 2016, please have a look at nwcsaf_msg_nc.py
 
 # mpop is free software: you can redistribute it and/or modify it under the
 # terms of the GNU General Public License as published by the Free Software
@@ -2829,6 +2830,8 @@ def get_best_product(filename, area_extent):
         if len(flist) == 0:
             LOG.warning("No matching %s.%s input MSG file."
                         % (filename, ext))
+        elif len(flist) == 1:
+            return flist[0]          
         else:
             # File found:
             if area_extent is None:
@@ -2940,7 +2943,10 @@ def load(scene, **kwargs):
                     % {"number": "01",
                        "product": "CMa__"})
         filename = get_best_product(filename_wildcards, area_extent)
-        print "    read data from: ", filename
+        if filename != None:
+            print "    read data from: ", filename
+        else:
+            print "*** Warning, no input file for NWCSAF CloudMask found:", filename_wildcards 
         if filename != None:
             ct_chan = MsgCloudMask() 
             ct_chan.read(filename,calibrate)
