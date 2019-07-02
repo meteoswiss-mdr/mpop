@@ -2829,6 +2829,8 @@ def get_best_product(filename, area_extent):
         if len(flist) == 0:
             LOG.warning("No matching %s.%s input MSG file."
                         % (filename, ext))
+        elif len(flist) == 1:
+            return flist[0]  
         else:
             # File found:
             if area_extent is None:
