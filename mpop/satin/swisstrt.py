@@ -1,3 +1,4 @@
+from __future__ import print_function
 import logging
 import glob
 import os
@@ -21,7 +22,7 @@ def load(satscene, *args, **kwargs):
     """Loads the *channels* into the satellite *scene*.
     """
 
-    print "... load TRT data (trt.py)"
+    print ("... load TRT data (trt.py)")
 
 
     # Dataset information
@@ -35,25 +36,25 @@ def load(satscene, *args, **kwargs):
               "instrument": satscene.instrument_name,
               "satellite": satscene.fullname
               }
-    # print values
+    # print (values)
     projectionName = conf.get("radar-level2", "projection")
 
     gmt = gmtime()
     now = datetime.datetime(gmt.tm_year, gmt.tm_mon, gmt.tm_mday, gmt.tm_hour, gmt.tm_min, 0) 
     dtime = now - satscene.time_slot
-    print "... desired time slot: "+ str(satscene.time_slot)+ ", current time: "+ str(now)
-    print "    time difference: "+ str(dtime)
+    print ("... desired time slot: "+ str(satscene.time_slot)+ ", current time: "+ str(now))
+    print ("    time difference: "+ str(dtime))
     NEAR_REAL_TIME=False
 
     archive_time = datetime.timedelta(days=2) # last 2( or 3) days are in the archive
     if dtime < archive_time:
-        print "    use the near real time data "
+        print ("    use the near real time data ")
         NEAR_REAL_TIME=True
         filename = os.path.join(
             satscene.time_slot.strftime(conf.get("radar-level2", "nearrealtime_dir")),
             satscene.time_slot.strftime(conf.get("radar-level2", "filename", raw=True)) % values)
     else: 
-        print "    use the all time archive "
+        print ("    use the all time archive ")
         data_dir = satscene.time_slot.strftime(conf.get("radar-level2", "archive_dir"))
         filename = os.path.join(
             satscene.time_slot.strftime(conf.get("radar-level2", "archive_dir")),
@@ -61,7 +62,7 @@ def load(satscene, *args, **kwargs):
 
 
     # Load data from txt file 
-    print "... read data from", str(filename)
+    print ("... read data from", str(filename))
     if len(glob.glob(str(filename))) == 0:
         "*** WARNING, no file "+str(filename)+" found!"
         filename=""
@@ -75,8 +76,8 @@ def load(satscene, *args, **kwargs):
     satscene.area = pyresample.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
    
     # Read TRTcells
-    print "... read TRT cells from file: " + filename
-    satscene.traj_IDs, satscene.TRTcells, satscene['TRTcells'] = readRdt(filename, time_slot=satscene.time_slot, **kwargs)
+    print ("... read TRT cells from file: " + filename)
+    satscene.traj_IDs, satscene.TRTcells, satscene['TRTcells'] = readTRT(filename, time_slot=satscene.time_slot, **kwargs)
 
 
 # ----------------------------------------------------------------------------------------------
@@ -135,7 +136,7 @@ class TRTcell:
 #   read only cell with a specific minimum rank [0,40]
 #   e.g. min_rank=8
 
-def readRdt(filename, time_slot=None, **kwargs):
+def readTRT(filename, time_slot=None, **kwargs):
 
     from os import stat
     from numpy import zeros, rot90, floor
@@ -148,20 +149,20 @@ def readRdt(filename, time_slot=None, **kwargs):
     cell_area=[]
 
     if 'cell' in kwargs.keys():
-        print "... read specific cell (rdt.py): ", kwargs['cell']
+        print ("... read specific cell (rdt.py): ", kwargs['cell'])
         cell=kwargs['cell']
     else:
-        print "... read all cells"
+        print ("... read all cells")
 
     if 'min_rank' in kwargs.keys():
-        print "... read only cell with minimum rank (rdt.py): ", kwargs['min_rank']
+        print ("... read only cell with minimum rank (rdt.py): ", kwargs['min_rank'])
         min_rank=kwargs['min_rank']
     else:
-        print "... read all ranks"
+        print ("... read all ranks")
         min_rank=int(-1)
         
     if 'read_pysteps' in kwargs.keys():
-        print "... read specific cell (rdt.py): ", kwargs['cell']
+        print ("... read specific cell (rdt.py): ", kwargs['cell'])
         read_pysteps_motion_vectors=kwargs['read_pysteps']
     else:
         read_pysteps_motion_vectors=False
@@ -178,7 +179,7 @@ def readRdt(filename, time_slot=None, **kwargs):
     if read_pysteps_motion_vectors:
         from netCDF4 import Dataset
         mv_file=time_slot.strftime("/data/COALITION2/PicturesSatellite/results_JMZ/2_input_NOSTRADAMUS_ANN/UV_precalc/%Y%m%d_RZC_disparr_UV.nc")
-        print "... read motion vector from ", mv_file
+        print ("... read motion vector from ", mv_file)
         ncfile = Dataset(mv_file,'r')
         
         ps_time = ncfile.variables["time"][:]
@@ -191,7 +192,7 @@ def readRdt(filename, time_slot=None, **kwargs):
         #Vy = ncfile.variables["Vy"][:,:,:]
         smooth_in_time=True
         if smooth_in_time:
-            print "smooth in time"
+            print ("smooth in time")
             Dx2 = deepcopy(Dx)
             Dy2 = deepcopy(Dy)
             for itt in range(1,ps_times.size-1):
@@ -211,14 +212,14 @@ def readRdt(filename, time_slot=None, **kwargs):
             #Vy = Vy2
 
         it = np.where(ps_times == time_slot)[0][0]
-        #print "time index it = ", it
+        #print ("time index it = ", it)
             
-        print "Dx.shape", Dx.shape
+        print ("Dx.shape", Dx.shape)
         mv_area = pyresample.load_area(os.path.join(CONFIG_PATH, "areas.def"), 'ccs4')
         from mpop.imageo.HRWimage import HRWstreamplot
         mv_PIL_image = HRWstreamplot( -12*Dx[it,:,:], 12*Dy[it,:,:], mv_area, '', color_mode='speed', vmax=25, linewidth_max=1.2, colorbar=False) # , colorbar=False, legend=True, legend_loc=3
         mv_PIL_image.save("mv_test.png")
-        print "display mv_test.png &"
+        print ("display mv_test.png &")
         
     # read data from file
     if filename != "" and stat(filename).st_size != 0:
@@ -233,20 +234,27 @@ def readRdt(filename, time_slot=None, **kwargs):
             line2=line.strip()
             if len(line2) > 0:
                 if line2.startswith("@"):
-                    # print "version: "+ line2
+                    # print ("version: "+ line2)
                     pass
                 elif line2.startswith("#"):
-                    # print "comment: " + line2
+                    # print ("comment: " + line2)
                     pass
                 else:
                     data = line2.split("; ")
-                    # print "data: " + line2
+                    #print ("data: " + line2)
+                    #read_cell=False 
+                    #if 'cell' not in kwargs.keys():
+                    #    read_cell=True
+                    #if 'cell' in kwargs.keys():
+                    #    if data[0] == kwargs['cell']:
+                    #        read_cell=True
+                    #print (data[0], kwargs['cell'], 'cell' not in kwargs.keys(), ('cell' in kwargs.keys() and data[0] == kwargs['cell']))
                     if ('cell' not in kwargs.keys()) or ('cell' in kwargs.keys() and data[0] == cell):
                         if ('min_rank' not in kwargs.keys()) or ('min_rank' in kwargs.keys() and int(data[11]) >= min_rank):
                             traj_IDs.append(data[0])                          # awk '{print $1}' CZC1420416000T.trt
                             RANKs.append(int(data[11]))                       
                             cell_area.append(int(data[7]))
-                            #print "create TRT cell: " + data[0]
+                            #print ("read TRT cell: " + data[0])
                             TRTcells[data[0]] = TRTcell()
                             TRTcells[data[0]].date         = data[ 1]         # awk '{print $2}' CZC1420416000T.trt
                             TRTcells[data[0]].lon          = float(data[ 2])  # awk '{print $3}' CZC1420416000T.trt
@@ -285,12 +293,12 @@ def readRdt(filename, time_slot=None, **kwargs):
                             if read_pysteps_motion_vectors:
                                 TRTcells[data[0]].pysteps_Dx = Dx[it, TRTcells[data[0]].iCH, TRTcells[data[0]].jCH]
                                 TRTcells[data[0]].pysteps_Dy = Dy[it, TRTcells[data[0]].iCH, TRTcells[data[0]].jCH]
-                                #print "("+data[0]+", %3d %3d %2d) Dvel_x, Dvel_y, dx, dy = %7.3f %7.3f %7.3f %7.3f" % \
+                                #print ("("+data[0]+", %3d %3d %2d) Dvel_x, Dvel_y, dx, dy = %7.3f %7.3f %7.3f %7.3f" % \
                                 #(TRTcells[data[0]].iCH, TRTcells[data[0]].jCH, TRTcells[data[0]].RANKr,\
-                                # TRTcells[data[0]].Dvel_x, TRTcells[data[0]].Dvel_y, TRTcells[data[0]].pysteps_Dx, TRTcells[data[0]].pysteps_Dy)  
+                                # TRTcells[data[0]].Dvel_x, TRTcells[data[0]].Dvel_y, TRTcells[data[0]].pysteps_Dx, TRTcells[data[0]].pysteps_Dy))  
                             # else:
                                 ## use TRT motion vectors 
-                                # print "("+data[0]+") Dvel_x, Dvel_y =", TRTcells[data[0]].Dvel_x, TRTcells[data[0]].Dvel_y
+                                # print ("("+data[0]+") Dvel_x, Dvel_y =", TRTcells[data[0]].Dvel_x, TRTcells[data[0]].Dvel_y)
                             
                             dx=float(data[ 4])
                             dy=float(data[ 5])
@@ -303,30 +311,26 @@ def readRdt(filename, time_slot=None, **kwargs):
         file.close()
                         
         # max RANK is  2014072316000004 16 44 511.0 466.0
-        print "                 traj_ID        Rank Area  x0   y0"
+        print ("                 traj_ID        Rank Area   x0   y0")
+        for traj in traj_IDs:
+            print ("               %s   %2d %4.0f %4.0f %4.0f" % (traj, TRTcells[traj].RANKr, TRTcells[traj].area, TRTcells[traj].iCH, TRTcells[traj].jCH))
  
         if False: #len(RANKs) > 0:
-            print "                 traj_ID        Rank Area  x0   y0"
+            print ("                 traj_ID        Rank Area  x0   y0")
             RANKs_np = np.array(RANKs)
             i_max = np.argmax(RANKs_np)
             max_rank = RANKs_np[i_max]
             traj=traj_IDs[i_max]
-            print '    max RANK is ', traj, TRTcells[traj].RANKr, TRTcells[traj].area, TRTcells[traj].iCH, TRTcells[traj].jCH
+            print ('    max RANK is ', traj, TRTcells[traj].RANKr, TRTcells[traj].area, TRTcells[traj].iCH, TRTcells[traj].jCH)
 
             cell_area_np=np.array(cell_area)
             i_max = np.argmax(cell_area_np)
             max_area = cell_area_np[i_max]
             traj=traj_IDs[i_max]
-            print '    max area is ', traj, TRTcells[traj].RANKr, TRTcells[traj].area, TRTcells[traj].iCH, TRTcells[traj].jCH
-
-        #print traj_IDs
-        #
-        #print traj, TRTcells[traj].date, TRTcells[traj].lon, TRTcells[traj].lat
-        #traj=traj_IDs[1]
-        #print traj, TRTcells[traj].date, TRTcells[traj].lon, TRTcells[traj].lat
+            print ('    max area is ', traj, TRTcells[traj].RANKr, TRTcells[traj].area, TRTcells[traj].iCH, TRTcells[traj].jCH)
 
     else:
-        print '*** Warning, empty lightning input file ', file
+        print ('*** Warning, empty TRT input file ', file)
 
     return traj_IDs, TRTcells, cell_mask
 
@@ -347,7 +351,7 @@ def add_cell(prop, i, j, dx, form, dy=1, angle=0, rank=1):
 
     from numpy import arange, meshgrid
 
-    # print "add lightning at", i, j
+    # print ("add lightning at", i, j)
     if form == 'square':
         # mark a square 
         prop[i-dx:i+dx,j-dx:j+dx]+=1
@@ -357,11 +361,11 @@ def add_cell(prop, i, j, dx, form, dy=1, angle=0, rank=1):
         x = arange(0, 710)  # 709-
         y = arange(0, 640)
         X, Y = meshgrid(x, y)
-        #print X
-        #print Y        
-        #print X.shape
-        #print Y.shape
-        #print lightnings.shape
+        #print (X)
+        #print (Y)        
+        #print (X.shape)
+        #print (Y.shape)
+        #print (lightnings.shape)
         interior = ((X-j)**2 + (Y-i)**2) < rr**2
         prop += rank*interior
     elif form == 'empty_circle':
@@ -378,11 +382,11 @@ def add_cell(prop, i, j, dx, form, dy=1, angle=0, rank=1):
         x = arange(0, 710)  # 709-
         y = arange(0, 640)
         X, Y = meshgrid(x, y)
-        #print X
-        #print Y        
-        #print X.shape
-        #print Y.shape
-        #print lightnings.shape
+        #print (X)
+        #print (Y)       
+        #print (X.shape)
+        #print (Y.shape)
+        #print (lightnings.shape)
         from math import sin, cos, pi
         a_rad = 0.5*pi + (angle / 360. * 2. * pi)
 
@@ -394,11 +398,11 @@ def add_cell(prop, i, j, dx, form, dy=1, angle=0, rank=1):
         x = arange(0, 710)  # 709-
         y = arange(0, 640)
         X, Y = meshgrid(x, y)
-        #print X
-        #print Y        
-        #print X.shape
-        #print Y.shape
-        #print lightnings.shape
+        #print (X)
+        #print (Y)       
+        #print (X.shape)
+        #print (Y.shape)
+        #print (lightnings.shape)
         from math import sin, cos, pi
         a_rad = 0.5*pi + (angle / 360. * 2. * pi)
 
@@ -409,5 +413,5 @@ def add_cell(prop, i, j, dx, form, dy=1, angle=0, rank=1):
                                           ( ((X-j)*sin(a_rad) - (Y-i)*cos(a_rad)) / dy)**2) < 1.18 )
         prop += rank*interior
     else:
-        print '*** ERROR in add_lightning (lightning.py)'
-        print '    unknown form ', form
+        print ('*** ERROR in add_cell (swisstrt.py)')
+        print ('    unknown form ', form)
