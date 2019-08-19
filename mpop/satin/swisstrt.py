@@ -330,7 +330,7 @@ def readTRT(filename, time_slot=None, **kwargs):
             print ('    max area is ', traj, TRTcells[traj].RANKr, TRTcells[traj].area, TRTcells[traj].iCH, TRTcells[traj].jCH)
 
     else:
-        print ('*** Warning, empty TRT input file ', file)
+        print ('*** Warning, empty TRT input file ', filename)
 
     return traj_IDs, TRTcells, cell_mask
 
