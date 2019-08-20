@@ -22,7 +22,7 @@ def load(satscene, *args, **kwargs):
     """Loads the *channels* into the satellite *scene*.
     """
 
-    print ("... load TRT data (trt.py)")
+    print ("... load TRT data (with mpop/satin/swisstrt.py)")
 
 
     # Dataset information
@@ -72,13 +72,14 @@ def load(satscene, *args, **kwargs):
     else: 
         filename = glob.glob(str(filename))[0]
 
-    # get projection 
-    satscene.area = pyresample.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
-   
+    
     # Read TRTcells
     print ("... read TRT cells from file: " + filename)
     satscene.traj_IDs, satscene.TRTcells, satscene['TRTcells'] = readTRT(filename, time_slot=satscene.time_slot, **kwargs)
 
+    # get projection 
+    satscene.area = pyresample.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
+    satscene['TRTcells'].area = satscene.area
 
 # ----------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------
