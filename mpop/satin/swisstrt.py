@@ -24,7 +24,6 @@ def load(satscene, *args, **kwargs):
 
     print ("... load TRT data (with mpop/satin/swisstrt.py)")
 
-
     # Dataset information
     #
     # Read config file content
@@ -64,22 +63,23 @@ def load(satscene, *args, **kwargs):
     # Load data from txt file 
     print ("... read data from", str(filename))
     if len(glob.glob(str(filename))) == 0:
-        "*** WARNING, no file "+str(filename)+" found!"
+        print ("*** WARNING, no file "+str(filename)+" found!")
         filename=""
     elif len(glob.glob(str(filename))) > 1:
-        "*** WARNING, more than one file "+str(filename)+" found!"
+        print ("*** WARNING, more than one file "+str(filename)+" found!")
         filename = glob.glob(str(filename))[0]
     else: 
+        print ("... Found one TRT file: ",glob.glob(str(filename)))
         filename = glob.glob(str(filename))[0]
 
-    
+   
     # Read TRTcells
     print ("... read TRT cells from file: " + filename)
     satscene.traj_IDs, satscene.TRTcells, satscene['TRTcells'] = readTRT(filename, time_slot=satscene.time_slot, **kwargs)
 
     # get projection 
-    satscene.area = pyresample.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
-    satscene['TRTcells'].area = satscene.area
+    #satscene.area = pyresample.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
+    satscene['TRTcells'].area = pyresample.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
 
 # ----------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------
@@ -331,7 +331,7 @@ def readTRT(filename, time_slot=None, **kwargs):
             print ('    max area is ', traj, TRTcells[traj].RANKr, TRTcells[traj].area, TRTcells[traj].iCH, TRTcells[traj].jCH)
 
     else:
-        print ('*** Warning, empty TRT input file ', file)
+        print ('*** Warning, empty TRT input file ', filename)
 
     return traj_IDs, TRTcells, cell_mask
 
