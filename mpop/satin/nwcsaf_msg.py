@@ -82,6 +82,7 @@ def get_area_extent(filename):
     """
     import h5py
     h5f = h5py.File(filename, 'r')
+    #print filename
     print "msg_hdf get_area_extent: CFAC, LFAC, COFF, LOFF, NC, NL = ", h5f.attrs["CFAC"], h5f.attrs["LFAC"], h5f.attrs["COFF"], h5f.attrs["LOFF"], h5f.attrs["NC"], h5f.attrs["NL"]
     aex = _get_area_extent(h5f.attrs["CFAC"],
                            h5f.attrs["LFAC"],
@@ -2822,7 +2823,7 @@ MSG_PGE_EXTENTIONS = ["PLAX.CTTH.0.h5", "PLAX.CLIM.0.h5", "h5"]
 def get_best_product(filename, area_extent):
     """Get the best of the available products for the *filename* template.
     """
-
+    
     for ext in MSG_PGE_EXTENTIONS:
         match_str = filename + "." + ext
         LOG.debug("glob-string for filename: " + str(match_str))

@@ -69,17 +69,17 @@ def load(satscene, *args, **kwargs):
         print ("*** WARNING, more than one file "+str(filename)+" found!")
         filename = glob.glob(str(filename))[0]
     else: 
-        print ("... Found one TRT file: ",glob.glob(str(filename)))
+        print ("... Found one TRT file: ", glob.glob(str(filename)))
         filename = glob.glob(str(filename))[0]
 
    
     # Read TRTcells
     print ("... read TRT cells from file: " + filename)
-    satscene.traj_IDs, satscene.TRTcells, satscene['TRTcells'] = readTRT(filename, time_slot=satscene.time_slot, **kwargs)
+    satscene.traj_IDs, satscene.TRT, satscene['TRT'] = readTRT(filename, time_slot=satscene.time_slot, **kwargs)
 
     # get projection 
     #satscene.area = pyresample.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
-    satscene['TRTcells'].area = pyresample.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
+    satscene['TRT'].area = pyresample.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
 
 # ----------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------
@@ -215,7 +215,7 @@ def readTRT(filename, time_slot=None, **kwargs):
         it = np.where(ps_times == time_slot)[0][0]
         #print ("time index it = ", it)
             
-        print ("Dx.shape", Dx.shape)
+        #print ("Dx.shape", Dx.shape)
         mv_area = pyresample.load_area(os.path.join(CONFIG_PATH, "areas.def"), 'ccs4')
         from mpop.imageo.HRWimage import HRWstreamplot
         mv_PIL_image = HRWstreamplot( -12*Dx[it,:,:], 12*Dy[it,:,:], mv_area, '', color_mode='speed', vmax=25, linewidth_max=1.2, colorbar=False) # , colorbar=False, legend=True, legend_loc=3

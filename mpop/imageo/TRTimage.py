@@ -77,6 +77,8 @@ def TRTimage( TRTcell_IDs, TRTcells, obj_area, minRank=8, alpha_max=1.0, plot_ve
     pixel_size_x_km = 0.001 * obj_area.pixel_size_x
     pixel_size_y_km = 0.001 * obj_area.pixel_size_y
 
+    #print "minRank", minRank
+    
     for cell in TRTcell_IDs:
 
         if TRTcell_ID is not None:
@@ -86,6 +88,8 @@ def TRTimage( TRTcell_IDs, TRTcells, obj_area, minRank=8, alpha_max=1.0, plot_ve
             
         if TRTcells[cell].RANKr >= minRank:
 
+            #print "plot ", cell, TRTcells[cell].RANKr
+            
             (x0,y0) = obj_area.get_xy_from_lonlat(TRTcells[cell].lon, TRTcells[cell].lat, outside_error=False, return_int=False)
             y0 = (obj_area.y_size-1)-y0
             # print (x0,y0)
@@ -145,8 +149,8 @@ def TRTimage( TRTcell_IDs, TRTcells, obj_area, minRank=8, alpha_max=1.0, plot_ve
                                  fill=False, edgecolor=edgecolors[it] )
                     ax.add_artist(e)
                     e.set_clip_box(ax.bbox)
-                    #e.set_alpha(alpha)       # transparency: 0.0 transparent, 1 total visible  
-            
+                    #e.set_alpha(alpha)       # transparency: 0.0 transparent, 1 total visible
+                    
             if fill:
                 edgecolor = 'black'
             else:
@@ -158,21 +162,28 @@ def TRTimage( TRTcell_IDs, TRTcells, obj_area, minRank=8, alpha_max=1.0, plot_ve
                          height =  2*TRTcells[cell].ell_L / pixel_size_y_km, \
                          angle  = -TRTcells[cell].angle, \
                          fill=fill, edgecolor=edgecolor )
-            
+
+            #print e, alpha, cell_color
             ax.add_artist(e)
             e.set_clip_box(ax.bbox)
             
             e.set_alpha(alpha)       # transparency: 0.0 transparent, 1 total visible  
             e.set_facecolor(cell_color)  # "white" or [1,1,1]
             
-
             if plot_vel:
                 ax.arrow(x0, y0, vx, vy, head_width = head_width, head_length = head_length, fc=cell_color, ec=cell_color)
                     
     if 1==1:
+        #from pylab import show
+        #show()
         # print " !!! convert fig to image by function fig2img !!!"
         ### this would avoid saving into a file, but it fills the transparent areas with "white"
-        PIL_image = fig2img ( fig )  
+        PIL_image = fig2img ( fig )
+
+        #from PIL import ImageDraw
+        #draw = ImageDraw.Draw(PIL_image)
+        #draw.ellipse( (100,150,300,200), outline="white") #,fill=255
+
     else: 
         tmp_file = '/tmp/TRT_'+str(uuid4())+'.png'
         # print tmp_file
