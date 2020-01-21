@@ -27,6 +27,9 @@ generic classes, to be inherited when needed.
 A scene is a set of :mod:`mpop.channel` objects for a given time, and sometimes
 also for a given area.
 """
+from __future__ import division
+from __future__ import print_function
+
 import ConfigParser
 import copy
 import datetime
@@ -79,6 +82,8 @@ class Satellite(object):
     """
 
     def __init__(self, (satname, number, variant)=(None, None, None)):
+#    def __init__(self, xxx_todo_changeme=(None, None, None)):
+#        (satname, number, variant) = xxx_todo_changeme
         try:
             self.satname = satname or "" or self.satname
         except AttributeError:
@@ -494,13 +499,13 @@ class SatelliteInstrumentScene(SatelliteScene):
             if len(self.channels_to_load) == 0:
                 return
 
-            if "reader_level" in kwargs.keys():
+            if "reader_level" in list(kwargs.keys()):
                 if kwargs["reader_level"] is not None:
                     if kwargs["reader_level"] not in levels:
                         LOG.warning("Specified reader_level \""+
                                     kwargs["reader_level"]+"\" in not defined in config file")
-                        print "*** ERROR, specified reader_level \""+\
-                                    kwargs["reader_level"]+"\" in not defined in config file"
+                        print("*** ERROR, specified reader_level \""+\
+                                    kwargs["reader_level"]+"\" in not defined in config file")
                     LOG.debug(
                         "Using explecit definition of reader level: " + kwargs["reader_level"])
                     if kwargs["reader_level"] != level:
@@ -527,7 +532,7 @@ class SatelliteInstrumentScene(SatelliteScene):
                                          "four numbers.")
 
                 reader_instance.load(self, **kwargs)
-            except ImportError, err:
+            except ImportError as err:
                 LOG.exception("ImportError while loading " + reader_name + ": "
                               + str(err))
                 continue
@@ -554,7 +559,7 @@ class SatelliteInstrumentScene(SatelliteScene):
         writer = "satout." + to_format
         try:
             writer_module = __import__(writer, globals(), locals(), ["save"])
-        except ImportError, err:
+        except ImportError as err:
             raise ImportError("Cannot load " + writer + " writer: " + str(err))
 
         return writer_module.save(self, filename, **options)
@@ -611,7 +616,7 @@ class SatelliteInstrumentScene(SatelliteScene):
             if ((datetime.datetime.utcnow() - self.time_slot > datetime.timedelta(days=30))):
                 orbitDir="/data/COALITION2/database/meteosat/SEVIRI/orbit"
                 NORADCatalogNumbers={"METEOSAT-8 (MSG-1)":"27509","METEOSAT-9 (MSG-2)":"28912","METEOSAT-10 (MSG-3)":"38552","METEOSAT-11 (MSG-4)":"40732"}
-                print "... try to read celestrak file:", orbitDir+"/sat"+NORADCatalogNumbers[sat_line]+".txt"
+                print("... try to read celestrak file:", orbitDir+"/sat"+NORADCatalogNumbers[sat_line]+".txt")
                 if os.path.isfile(orbitDir+"/sat"+NORADCatalogNumbers[sat_line]+".txt"):
                     with open('/data/COALITION2/database/meteosat/SEVIRI/orbit/sat28912.txt') as f:
                         content = f.readlines()
@@ -624,23 +629,23 @@ class SatelliteInstrumentScene(SatelliteScene):
                     #line2 = "2 28912   0.8588  58.7756 0001042 172.8619   4.4407  1.00274837 35001"
                     self.orbital = Orbital(sat_line, line1=lines1[it], line2=lines2[it], use_NEAR_for_DEEP_space=use_NEAR_for_DEEP_space)
                 else:
-                    print "*** WARNING in get_orbital (mpop/sceme.py)"
-                    print "    You like to investigate a date longer than 30 days ago"
-                    print "    per default pytroll uses the current TLE information"
-                    print "    You might consider to order historic TLE, please order them via"
-                    print "    https://celestrak.com/NORAD/archives/request.php"
-                    print "*** Continue with current TLE information"
+                    print("*** WARNING in get_orbital (mpop/sceme.py)")
+                    print("    You like to investigate a date longer than 30 days ago")
+                    print("    per default pytroll uses the current TLE information")
+                    print("    You might consider to order historic TLE, please order them via")
+                    print("    https://celestrak.com/NORAD/archives/request.php")
+                    print("*** Continue with current TLE information")
                     self.orbital = Orbital(sat_line, use_NEAR_for_DEEP_space=use_NEAR_for_DEEP_space)
             else:
                 # download most recent TLE file and assume that the change was small within the last 30 days ... 
-                print "and what now?!?!?"
-                print datetime.datetime.utcnow(), "------", str(self.time_slot), "------", str(datetime.timedelta(days=30))
+                print("and what now?!?!?")
+                print(datetime.datetime.utcnow(), "------", str(self.time_slot), "------", str(datetime.timedelta(days=30)))
                 # default solution: download most recent TLE
                 self.orbital = Orbital(sat_line, use_NEAR_for_DEEP_space=use_NEAR_for_DEEP_space)
                 
-        print "mpop/scene.py: self.orbital:"
-        print "----------------------------"
-        print self.orbital
+        print("mpop/scene.py: self.orbital:")
+        print("----------------------------")
+        print(self.orbital)
         
         return self.orbital
 
@@ -675,7 +680,7 @@ class SatelliteInstrumentScene(SatelliteScene):
                        (e.g. because it comes from another satellite)
         """
 
-        print "*** Simple estimation of Cloud Top Height with IR_108 channel"
+        print("*** Simple estimation of Cloud Top Height with IR_108 channel")
 
         # check if IR_108 is loaded
 
@@ -683,8 +688,8 @@ class SatelliteInstrumentScene(SatelliteScene):
             if isinstance(IR_108, mpop.channel.Channel):
                 ir108 = IR_108.data
             else:
-                print "*** Error in estimate_cth (mpop.scene.py)"
-                print "    given IR_108 is not of the type mpop.channel.Channel"
+                print("*** Error in estimate_cth (mpop.scene.py)")
+                print("    given IR_108 is not of the type mpop.channel.Channel")
                 quit()
         else:
             loaded_channels = [chn.name for chn in self.loaded_channels()]
@@ -692,8 +697,8 @@ class SatelliteInstrumentScene(SatelliteScene):
                 IR_108 = self["IR_108"]
                 ir108 = self["IR_108"].data
             else:
-                print "*** Error in estimate_cth (mpop/scene.py)"
-                print "    IR_108 is required to estimate CTH, but not loaded"
+                print("*** Error in estimate_cth (mpop/scene.py)")
+                print("    IR_108 is required to estimate CTH, but not loaded")
                 quit()
 
         # choose atmosphere
@@ -706,13 +711,13 @@ class SatelliteInstrumentScene(SatelliteScene):
                 if hasattr(self, 'time_slot'):
                     time_slot = self.time_slot
                 else:
-                    print "*** Error, in estimate_cth (mpop/channel.py)"
-                    print "    when using cth_atm=\"best\" also the time_slot information is required!"
+                    print("*** Error, in estimate_cth (mpop/channel.py)")
+                    print("    when using cth_atm=\"best\" also the time_slot information is required!")
                     quit()
 
             # automatic choise of temperature profile
             doy = time_slot.timetuple().tm_yday
-            print "... automatic choise of temperature profile lon=", lon, " lat=", lat, ", time=", str(time_slot), ", doy=", doy
+            print("... automatic choise of temperature profile lon=", lon, " lat=", lat, ", time=", str(time_slot), ", doy=", doy)
             if abs(lat) <= 30.0:
                 cth_atm = "tropics"
             elif doy < 80 or doy <= 264:
@@ -735,7 +740,7 @@ class SatelliteInstrumentScene(SatelliteScene):
                     cth_atm = "midlatitude winter"
                 elif 60 < lat:
                     cth_atm = "subarctic winter"
-            print "    choosing temperature profile for ", cth_atm
+            print("    choosing temperature profile for ", cth_atm)
 
         # estimate cloud top height by searching first fit of ir108 with
         # temperature profile
@@ -800,7 +805,7 @@ class SatelliteInstrumentScene(SatelliteScene):
         for chn in self.loaded_channels():
             if hasattr(chn, 'get_viewing_geometry'):
                 # calculate the viewing geometry of the SEVIRI sensor
-                print "... calculate viewing geometry using ", chn.name
+                print("... calculate viewing geometry using ", chn.name)
                 (azi, ele) = chn.get_viewing_geometry(self.get_orbital(use_NEAR_for_DEEP_space=use_NEAR_for_DEEP_space), self.time_slot)
                 break
 
@@ -816,10 +821,10 @@ class SatelliteInstrumentScene(SatelliteScene):
                     # corrected version
                     cth = copy.deepcopy(self["CTH"].data)
                 else:
-                    print "*** Error in parallax_corr (mpop.scene.py)"
-                    print "    parallax correction needs some cloud top height information"
-                    print "    please load the NWC-SAF CTTH product (recommended) or"
-                    print "    activate the option data.parallax_corr( estimate_cth=True )"
+                    print("*** Error in parallax_corr (mpop.scene.py)")
+                    print("    parallax correction needs some cloud top height information")
+                    print("    please load the NWC-SAF CTTH product (recommended) or")
+                    print("    activate the option data.parallax_corr( estimate_cth=True )")
                     quit()
             else:
                 # check if cth (given as argument to this function) has the same size as all loaded channels
@@ -832,18 +837,18 @@ class SatelliteInstrumentScene(SatelliteScene):
         else:
             if IR_108 is not None:
                 # estimate CTH with explicit IR_108
-                print "*** Warning, it is not recommended to use IR_108 observations from another platform"
-                print "    the IR_108 (with parallax shift) might represent a neighbouring cloud, if viewing geometry differs"
+                print("*** Warning, it is not recommended to use IR_108 observations from another platform")
+                print("    the IR_108 (with parallax shift) might represent a neighbouring cloud, if viewing geometry differs")
                 self.estimate_cth(cth_atm=cth_atm, time_slot=time_slot, IR_108=IR_108)
             else:
                 if "IR_108" in loaded_channels:
                     # estimate CTH with IR_108 that is included in self
                     self.estimate_cth(cth_atm=cth_atm, time_slot=time_slot)
                 else:
-                    print "*** Error in parallax_corr (mpop.scene.py)"
-                    print "    parallax correction needs some cloud top height information."
-                    print "    You specified the estimation of CTH with the IR_108, "
-                    print "    but IR_108 channel is not loaded"
+                    print("*** Error in parallax_corr (mpop.scene.py)")
+                    print("    parallax correction needs some cloud top height information.")
+                    print("    You specified the estimation of CTH with the IR_108, ")
+                    print("    but IR_108 channel is not loaded")
                     quit()
                     
             # copy cloud top height data
@@ -853,23 +858,23 @@ class SatelliteInstrumentScene(SatelliteScene):
         for chn in self.loaded_channels():
             if isinstance(chn, mpop.channel.Channel):
                 if hasattr(chn, 'parallax_corr'):
-                    print "... perform parallax correction for \'"+ chn.name+"\'" #, chn.area
+                    print("... perform parallax correction for \'"+ chn.name+"\'") #, chn.area
                     if replace:
                         chn_name_PC = chn.name
-                        print "    replace channel ", chn_name_PC
+                        print("    replace channel ", chn_name_PC)
                     else:
                         chn_name_PC = chn.name + "_PC"
-                        print "    create channel ", chn_name_PC
+                        print("    create channel ", chn_name_PC)
 
                     # take care of the parallax correction
                     self[chn_name_PC] = chn.parallax_corr(cth=cth, azi=azi, ele=ele, fill=fill)
                 else:
                     LOG.warning("Channel " + str(chn.name) + " has no attribute parallax_corr,"
                                 "thus parallax effect wont be corrected.")
-                    print "Channel " + str(chn.name) + " has no attribute parallax_corr,"
-                    print "thus parallax effect wont be corrected."
+                    print("Channel " + str(chn.name) + " has no attribute parallax_corr,")
+                    print("thus parallax effect wont be corrected.")
             else:
-                print "... Warning, cannot perform parallax correction for tpye: ", type(chn)
+                print("... Warning, cannot perform parallax correction for tpye: ", type(chn))
 
         return self
 

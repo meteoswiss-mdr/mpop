@@ -29,6 +29,9 @@
 """This module defines satellite instrument channels as a generic class, to be
 inherited when needed.
 """
+from __future__ import division
+from __future__ import print_function
+
 import copy
 
 import numpy as np
@@ -669,16 +672,16 @@ class Channel(GenericChannel):
 
         # get time_slot from info, if present
         if time_slot == None:
-            if "time" in self.info.keys():
+            if "time" in list(self.info.keys()):
                 time_slot = self.info["time"]
 
         if azi.size == 0 or ele.size == 0:
             if time_slot == None or orbital == None:
-                print "*** Error in parallax_corr (mpop/channel.py)"
-                print "    parallax_corr needs either time_slot and orbital"
-                print "    data[\"IR_108\"].parallax_corr(data[\"CTTH\"].height, time_slot=data.time_slot, orbital=orbital)"
-                print "    or the azimuth and elevation angle"
-                print "    data[\"IR_108\"].parallax_corr(data[\"CTTH\"].height, azi=azi, ele=ele)"
+                print("*** Error in parallax_corr (mpop/channel.py)")
+                print("    parallax_corr needs either time_slot and orbital")
+                print("    data[\"IR_108\"].parallax_corr(data[\"CTTH\"].height, time_slot=data.time_slot, orbital=orbital)")
+                print("    or the azimuth and elevation angle")
+                print("    data[\"IR_108\"].parallax_corr(data[\"CTTH\"].height, azi=azi, ele=ele)")
                 quit()
             else:
                 print ("... calculate viewing geometry (orbit and time are given)")
@@ -713,7 +716,7 @@ class Channel(GenericChannel):
         # get projection coordinates in meter
         (proj_x, proj_y) = self.area.get_proj_coords()
 
-        print "... calculate parallax shift"
+        print("... calculate parallax shift")
         # shifting pixels according to parallax corretion (in meter)
         proj_x_pc = proj_x + np.sin(np.deg2rad(azi)) * dz # shift  West-East in m  
         proj_y_pc = proj_y + np.cos(np.deg2rad(azi)) * dz # shift North(0)-South(positiv) in m
@@ -745,7 +748,7 @@ class Channel(GenericChannel):
         ind = np.where(cth_.mask == True)
         new_ch.data[x[ind], y[ind]] = self.data[x[ind], y[ind]]
 
-        print "... copy data to parallax corrected position"
+        print("... copy data to parallax corrected position")
         # copy cloudy pixel with new position modified with parallax shift
         ind = np.where(x_pc.mask == False)
         new_ch.data[x_pc[ind], y_pc[ind]] = self.data[x[ind], y[ind]]
@@ -754,11 +757,11 @@ class Channel(GenericChannel):
         new_ch.data = np.ma.masked_where(
             np.isnan(new_ch.data), new_ch.data, copy=False)
 
-        print "... fill missing values with method:", fill
+        print("... fill missing values with method:", fill)
         if fill.lower() == "false":
             return new_ch
         elif fill == "nearest":
-            print "*** fill missing values with nearest neighbour"
+            print("*** fill missing values with nearest neighbour")
             from scipy.ndimage import distance_transform_edt
             invalid = np.isnan(new_ch.data)
             ind = distance_transform_edt(
@@ -779,12 +782,12 @@ class Channel(GenericChannel):
                 invalid, return_distances=False, return_indices=True)
             new_ch.data = new_ch.data[tuple(ind)]
         else:
-            print "*** Error in parallax_corr (channel.py)"
-            print "    unknown gap fill method ", fill
+            print("*** Error in parallax_corr (channel.py)")
+            print("    unknown gap fill method ", fill)
             quit()
 
         if 'inttofloat' in locals():
-            print "... type cast data as int"
+            print("... type cast data as int")
             new_ch.data = new_ch.data.astype(int)
 
         return new_ch
@@ -801,7 +804,7 @@ class Channel(GenericChannel):
         # copy channel data which will be corrected in place
         chn_data = self.data.copy()
         CHUNK_SZ = 500
-        for start in xrange(0, chn_data.shape[1], CHUNK_SZ):
+        for start in range(0, chn_data.shape[1], CHUNK_SZ):
             # apply correction on channel data
             vz_corr(chn_data[:, start:start + CHUNK_SZ],
                     view_zen_angle_data[:, start:start + CHUNK_SZ])

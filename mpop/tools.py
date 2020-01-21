@@ -21,6 +21,8 @@
 
 '''Helper functions for eg. performing Sun zenith angle correction.
 '''
+from __future__ import division
+from __future__ import print_function
 
 import numpy as np
 
@@ -82,7 +84,7 @@ def estimate_cth(IR_108, cth_atm="standard"):
               Ulrich Hamann (MeteoSwiss), Richard Mueller (DWD)
     '''
 
-    print "*** estimating CTH using the 10.8 micro meter brightness temperature "
+    print("*** estimating CTH using the 10.8 micro meter brightness temperature ")
 
     if cth_atm.lower() != "tropopause":
 
@@ -93,7 +95,7 @@ def estimate_cth(IR_108, cth_atm="standard"):
 
         mpop_dir = os.path.dirname(mpop.__file__)
         afgl_file = mpop_dir+"/afgl.dat"
-        print "... assume ", cth_atm, " atmosphere for temperature profile"
+        print("... assume ", cth_atm, " atmosphere for temperature profile")
 
         if cth_atm.lower()=="standard" or cth_atm.lower()=="s":
             z, T = loadtxt(afgl_file, usecols=(0, 1), unpack=True, comments="#")
@@ -108,15 +110,15 @@ def estimate_cth(IR_108, cth_atm="standard"):
         elif cth_atm.lower()=="subarctic winter" or cth_atm.lower()=="ss":
             z, T = loadtxt(afgl_file, usecols=(0, 6), unpack=True, comments="#")
         else:
-            print "*** Error in estimate_cth (mpop/tools.py)"
-            print "unknown temperature profiel for CTH estimation: cth_atm = ", cth_atm
+            print("*** Error in estimate_cth (mpop/tools.py)")
+            print("unknown temperature profiel for CTH estimation: cth_atm = ", cth_atm)
             quit()
 
         height = zeros(IR_108.shape)
         # warmer than lowest level -> clear sky 
         height[where(IR_108 > T[-1])] = -1.
-        print "     z0(km)   z1(km)   T0(K)   T1(K)  number of pixels"
-        print "------------------------------------------------------"
+        print("     z0(km)   z1(km)   T0(K)   T1(K)  number of pixels")
+        print("------------------------------------------------------")
         for i in range(z.size)[::-1]:
 
             # search for temperatures between layer i-1 and i
@@ -124,7 +126,7 @@ def estimate_cth(IR_108, cth_atm="standard"):
             # interpolate CTH according to ir108 temperature
             height[ind] = z[i] + (IR_108[ind]-T[i])/(T[i-1]-T[i]) * (z[i-1]-z[i])
             # verbose output
-            print " {0:8.1f} {1:8.1f} {2:8.1f} {3:8.1f} {4:8d}".format(z[i], z[i-1], T[i], T[i-1], len(ind[0]))
+            print(" {0:8.1f} {1:8.1f} {2:8.1f} {3:8.1f} {4:8d}".format(z[i], z[i-1], T[i], T[i-1], len(ind[0])))
 
             # if temperature increases above 8km -> tropopause detected
             if z[i]>=8. and T[i] <= T[i-1]:
@@ -152,8 +154,8 @@ def estimate_cth(IR_108, cth_atm="standard"):
         # However numpy provides weird results for 5th percentile. 
         # Hence, for the working version the minima is used 
 
-        print "... assume tropopause height ", Htropo, ", tropopause temperature ", Tmin, "K (", Tmin-273.16, "deg C)"
-        print "    and constant temperature gradient 6.5 K/km"
+        print("... assume tropopause height ", Htropo, ", tropopause temperature ", Tmin, "K (", Tmin-273.16, "deg C)")
+        print("    and constant temperature gradient 6.5 K/km")
 
         height = -(IR_108 - Tmin)/6.5 + Htropo 
         # calculation of the height, the temperature gradient 
@@ -173,7 +175,7 @@ def estimate_cth(IR_108, cth_atm="standard"):
         prop = height
         min_data = prop.min()
         max_data = prop.max()
-        print " estimated CTH(meter) (min/max): ", min_data, max_data
+        print(" estimated CTH(meter) (min/max): ", min_data, max_data)
         min_data =     0
         max_data = 12000    
         colormap = deepcopy(rainbow)
