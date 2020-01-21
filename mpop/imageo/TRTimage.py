@@ -56,7 +56,7 @@ def TRTimage( TRTcell_IDs, TRTcells, obj_area, minRank=8, alpha_max=1.0, plot_ve
     canvas = FigureCanvas(fig)
     # get dots per inch of the screen
     DPI = fig.get_dpi()
-    # print "DPI", DPI
+    # print ("DPI", DPI)
     fig.set_size_inches(nx/float(DPI),ny/float(DPI))
     # get axis object 
     ax = fig.add_subplot(111, aspect='equal')
@@ -80,7 +80,7 @@ def TRTimage( TRTcell_IDs, TRTcells, obj_area, minRank=8, alpha_max=1.0, plot_ve
     pixel_size_x_km = 0.001 * obj_area.pixel_size_x
     pixel_size_y_km = 0.001 * obj_area.pixel_size_y
 
-    #print "minRank", minRank
+    #print ("minRank", minRank)
     
     for cell in TRTcell_IDs:
 
@@ -91,11 +91,11 @@ def TRTimage( TRTcell_IDs, TRTcells, obj_area, minRank=8, alpha_max=1.0, plot_ve
             
         if TRTcells[cell].RANKr >= minRank:
 
-            #print "plot ", cell, TRTcells[cell].RANKr
+            #print ("plot ", cell, TRTcells[cell].RANKr)
             
             (x0,y0) = obj_area.get_xy_from_lonlat(TRTcells[cell].lon, TRTcells[cell].lat, outside_error=False, return_int=False)
             y0 = (obj_area.y_size-1)-y0
-            # print (x0,y0)
+            # print ((x0,y0))
 
             # get cell velocity either from TRT or pysteps
             if use_TRT_velocity:
@@ -104,7 +104,7 @@ def TRTimage( TRTcell_IDs, TRTcells, obj_area, minRank=8, alpha_max=1.0, plot_ve
             else:
                 vx =  -12*TRTcells[cell].pysteps_Dx
                 vy =   12*TRTcells[cell].pysteps_Dy
-            #print "%s %10.7f %10.7f" % (cell, vx, vy)
+            #print ("%s %10.7f %10.7f" % (cell, vx, vy))
                 
             
             if TRTcells[cell].RANKr <= 12:
@@ -122,7 +122,7 @@ def TRTimage( TRTcell_IDs, TRTcells, obj_area, minRank=8, alpha_max=1.0, plot_ve
             else:
                 cell_color="red"
                 alpha = alpha_max
-            # print "cell ID: %s, cell rank: %2d, cell_color:%7s, alpha = %4.1f" % (cell, TRTcells[cell].RANKr, cell_color, alpha)
+            # print ("cell ID: %s, cell rank: %2d, cell_color:%7s, alpha = %4.1f" % (cell, TRTcells[cell].RANKr, cell_color, alpha))
 
             
             # plot first the nowcast and later the actual cell (above)
@@ -166,7 +166,7 @@ def TRTimage( TRTcell_IDs, TRTcells, obj_area, minRank=8, alpha_max=1.0, plot_ve
                          angle  = -TRTcells[cell].angle, \
                          fill=fill, edgecolor=edgecolor )
 
-            #print e, alpha, cell_color
+            #print (e, alpha, cell_color)
             ax.add_artist(e)
             e.set_clip_box(ax.bbox)
             
@@ -179,7 +179,7 @@ def TRTimage( TRTcell_IDs, TRTcells, obj_area, minRank=8, alpha_max=1.0, plot_ve
     if 1==1:
         #from pylab import show
         #show()
-        # print " !!! convert fig to image by function fig2img !!!"
+        # print (" !!! convert fig to image by function fig2img !!!")
         ### this would avoid saving into a file, but it fills the transparent areas with "white"
         PIL_image = fig2img ( fig )
 
@@ -189,7 +189,7 @@ def TRTimage( TRTcell_IDs, TRTcells, obj_area, minRank=8, alpha_max=1.0, plot_ve
 
     else: 
         tmp_file = '/tmp/TRT_'+str(uuid4())+'.png'
-        # print tmp_file
+        # print (tmp_file)
         plt.savefig(tmp_file, dpi=DPI, transparent=True) #, bbox_inches='tight'
         # subprocess.call("display "+tmp_file+" &", shell=True) 
         PIL_image = PIL_Image.open(tmp_file)

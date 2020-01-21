@@ -312,10 +312,10 @@ def convert_palette2colormap(palette):
 
     max_pal = max(max(red), max(blue), max(green))
     if max_pal <= 1.0:
-        # print "palette already normalized"
+        # print ("palette already normalized")
         denom = 1.0
     else:
-        # print "palette normalized to 255"
+        # print ("palette normalized to 255")
         denom = 255.0
 
     for i in palette:

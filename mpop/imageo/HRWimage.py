@@ -33,7 +33,7 @@ def prepare_figure(obj_area):
     canvas = FigureCanvas(fig)
     # get dots per inch of the screen
     DPI = fig.get_dpi()
-    # print "DPI", DPI
+    # print ("DPI", DPI)
     fig.set_size_inches(nx/float(DPI),ny/float(DPI))
     # set fonts to bold
     plt.rc('font', weight='bold')
@@ -93,7 +93,7 @@ def HRWimage( HRW_data, obj_area, hrw_channels=None, min_correlation=None, cloud
     """
 
     #if min_correlation != None:
-    #    print "    filter for min_correlation = ", min_correlation
+    #    print ("    filter for min_correlation = ", min_correlation)
     #    inds = where(HRW_data.correlation > min_correlation)
     #    HRW_data = HRW_data.subset(inds)
      
@@ -239,10 +239,10 @@ def HRWimage( HRW_data, obj_area, hrw_channels=None, min_correlation=None, cloud
         u = HRW_data.wind_speed[wid] * -1 * sin(radians(HRW_data.wind_direction[wid])) 
         v = HRW_data.wind_speed[wid] * -1 * cos(radians(HRW_data.wind_direction[wid]))
 
-        #print '%6s %3d %10.7f %10.7f %7.2f %7.1f %8.1f %10s' % (HRW_data.channel[wid], HRW_data.wind_id[wid], \
+        #print ('%6s %3d %10.7f %10.7f %7.2f %7.1f %8.1f %10s' % (HRW_data.channel[wid], HRW_data.wind_id[wid], \
         #                                                        HRW_data.lon[wid], HRW_data.lat[wid], \
         #                                                        HRW_data.wind_speed[wid]*m_per_s_to_knots, \
-        #                                                        HRW_data.wind_direction[wid], HRW_data.pressure[wid], barbcolor)
+        #                                                        HRW_data.wind_direction[wid], HRW_data.pressure[wid], barbcolor))
 
 
         if style == 'barbs':
@@ -319,7 +319,7 @@ def HRWstreamplot( u2d, v2d, obj_area, interpol_method, color_mode='speed', dens
 
     ## get a empty figure with transparent background, no axis and no margins outside the diagram
     fig, ax = prepare_figure(obj_area)
-    #print dir(ax)
+    #print (dir(ax))
 
     # check if there is there have been enough observation (or if data is not a number array)
     if isnan(np_sum(u2d)):
@@ -333,8 +333,8 @@ def HRWstreamplot( u2d, v2d, obj_area, interpol_method, color_mode='speed', dens
         # create grid for the wind data
         [nx, ny] = u2d.shape  # for ccs4 this is (640, 710)
         Y, X = mgrid[nx-1:-1:-1, 0:ny] # watch out for Y->nx and X->ny
-        #print "X.shape ", Y.shape
-        #print Y[:,0]
+        #print ("Y.shape ", Y.shape)
+        #print (Y[:,0])
 
         print("   calculate color data ", color_mode)
         if color_mode == 'speed':
@@ -481,10 +481,6 @@ def HRW_2dfield( HRW_data, obj_area, interpol_method=None, hrw_channels=None, mi
     vv = vv[index]
 
     points = transpose(append([xx], [yy], axis=0))
-    #print type(uu), uu.shape
-    #print type(points), points.shape
-    #print points[0], yy[0], xx[0]
-    #print uu[0]
 
     nx = obj_area.x_size
     ny = obj_area.y_size
@@ -565,8 +561,8 @@ def HRW_2dfield( HRW_data, obj_area, interpol_method=None, hrw_channels=None, mi
             else:
                 # use griddata to extrapolate with closest neighbour
                 points2 = transpose(append([grid_x.flatten()], [grid_y.flatten()], axis=0))
-                print(type(grid_x.flatten()), grid_x.flatten().shape)
-                print(type(points2), points2.shape)
+                #print(type(grid_x.flatten()), grid_x.flatten().shape)
+                #print(type(points2), points2.shape)
                 mask = ~isnan(grid_v1.flatten())
                 inds = where(mask)[0]
                 grid_u1x = griddata(points2[inds], grid_u1.flatten()[inds], (grid_x, grid_y), method='nearest')
@@ -583,7 +579,7 @@ def HRW_2dfield( HRW_data, obj_area, interpol_method=None, hrw_channels=None, mi
                 yy = append(yy, y_add)
                 points = transpose(append([yy], [xx], axis=0))
 
-                print('calc extent1')
+                #print('calc extent1')
                 grid_u1e = griddata(points, uu, (grid_x, grid_y), method='linear')
                 grid_v1e = griddata(points, vv, (grid_x, grid_y), method='linear')
 
@@ -594,33 +590,33 @@ def HRW_2dfield( HRW_data, obj_area, interpol_method=None, hrw_channels=None, mi
 
         ##http://docs.scipy.org/doc/scipy/reference/tutorial/interpolate.html
         ##http://stackoverflow.com/questions/3526514/problem-with-2d-interpolation-in-scipy-non-rectangular-grid
-        #print "SmoothBivariateSpline:"
+        #print ("SmoothBivariateSpline:")
         #from scipy.interpolate import SmoothBivariateSpline
         #fitu = SmoothBivariateSpline( xx, yy, uu, s=1000) # , kx=3, ky=3, s = smooth * z2sum m 
         #from numpy import empty 
         #grid_u_SBP = empty(grid_x.shape)
         #for i in range(0,nx-1):       # starting upper right going down
         #    for j in range(0,ny-1):   # starting lower right going right
-        #        #print i,j
+        #        #print (i,j)
         #        grid_u_SBP[j,i] = fitu(j,i)
 
         #grid_u_SBP = np.array([k.predict([x,y]) for x,y in zip(np.ravel(grid_x), np.ravel(grid_y))])
         #grid_u_SBP = grid_u_SBP.reshape(grid_x.shape)
 
-        ##print x2
-        ##print y2
+        ##print (x2)
+        ##print (y2)
         #grid_u_SBP = fitu(x2,y2)
-        ##print "grid_u_SBP.shape", grid_u_SBP.shape
-        ###print grid_u_SBP
-        #print "End SmoothBivariateSpline:"
+        ##print ("grid_u_SBP.shape", grid_u_SBP.shape)
+        ###print (grid_u_SBP)
+        #print ("End SmoothBivariateSpline:")
 
-        #print "bisplrep:"
+        #print ("bisplrep:")
         #from scipy import interpolate
         #tck = interpolate.bisplrep(xx, yy, uu)
         #grid_u_BSR = interpolate.bisplev(grid_x[:,0], grid_y[0,:], tck)
-        #print grid_u_BSR.shape
-        #print "bisplrep"
-        #print "grid_v1x.shape", grid_v1x.shape
+        #print (grid_u_BSR.shape)
+        #print ("bisplrep")
+        #print ("grid_v1x.shape", grid_v1x.shape)
 
         extent=(0,nx,0,ny)
         origin='lower'
