@@ -1,3 +1,6 @@
+from __future__ import division
+from __future__ import print_function
+
 import matplotlib as mpl   # this HAS TO BE the very first lines (before any other matplotlib functions are imported) 
 mpl.use('Agg')             # this HAS TO BE the very first lines (before any other matplotlib functions are imported) 
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -6,6 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib import rcParams
 from PIL import Image as PIL_Image
 from TRTimage import fig2data, fig2img
+#from .TRTimage import fig2data, fig2img (this was the automatic python2 to python3 syntax suggestion)
 from pylab import text as pylab_text
 from numpy import sin, cos, radians, where, nonzero, transpose, arange, append, meshgrid, mgrid, empty, isnan, nan, percentile
 from numpy import sum as np_sum
@@ -93,7 +97,7 @@ def HRWimage( HRW_data, obj_area, hrw_channels=None, min_correlation=None, cloud
     #    inds = where(HRW_data.correlation > min_correlation)
     #    HRW_data = HRW_data.subset(inds)
      
-    print "... create HRWimage, color_mode = ", color_mode
+    print("... create HRWimage, color_mode = ", color_mode)
 
     # get a empty figure with transparent background, no axis and no margins outside the diagram
     fig, ax = prepare_figure(obj_area)
@@ -117,7 +121,7 @@ def HRWimage( HRW_data, obj_area, hrw_channels=None, min_correlation=None, cloud
             barb_length = 4.68
         else:          
             barb_length = 4.00
-    print "barb_length", barb_length
+    print("barb_length", barb_length)
 
     if color_mode == 'channel':
         classes = ('HRV',          'VIS008 ', 'WV_062 ',   'WV_073 ',   'IR_120 ')
@@ -159,8 +163,8 @@ def HRWimage( HRW_data, obj_area, hrw_channels=None, min_correlation=None, cloud
         colors   = ['indigo', 'darkred', 'red','darkorange','gold', 'lime', 'green']
         classes = tuple([color_mode+' '+cl for cl in classes])
     else:
-          print "*** Error in HRW_streamplot (mpop/imageo/HRWimage.py)"
-          print "    unknown color_mode"
+          print("*** Error in HRW_streamplot (mpop/imageo/HRWimage.py)")
+          print("    unknown color_mode")
           quit()
 
     for wid in range(len(HRW_data.wind_id)):
@@ -226,8 +230,8 @@ def HRWimage( HRW_data, obj_area, hrw_channels=None, min_correlation=None, cloud
             else:
                 barbcolor = colors[6]
         else:
-              print "*** Error in HRW_streamplot (mpop/imageo/HRWimage.py)"
-              print "    unknown color_mode"
+              print("*** Error in HRW_streamplot (mpop/imageo/HRWimage.py)")
+              print("    unknown color_mode")
               quit()
       
         x0, y0 = obj_area.get_xy_from_lonlat( HRW_data.lon[wid], HRW_data.lat[wid], outside_error=False) #, return_int=True
@@ -270,7 +274,7 @@ def HRWimage( HRW_data, obj_area, hrw_channels=None, min_correlation=None, cloud
         alpha=1.0
         bbox={'facecolor':'white', 'alpha':alpha, 'pad':10}
 
-        print "... add legend: color is a function of ",  color_mode
+        print("... add legend: color is a function of ",  color_mode)
         
         recs = empty( len(classes), dtype=object)
         recs[:] = rec 
@@ -319,12 +323,12 @@ def HRWstreamplot( u2d, v2d, obj_area, interpol_method, color_mode='speed', dens
 
     # check if there is there have been enough observation (or if data is not a number array)
     if isnan(np_sum(u2d)):
-        print "... there are not enough observations"
+        print("... there are not enough observations")
         ax.text(0.95, 0.01, 'currently not enough observations',
                 verticalalignment='bottom', horizontalalignment='right',
                 transform=ax.transAxes, color='red', fontsize=15)
     else:
-        print "there is enough data, interpolation method: ", interpol_method
+        print("there is enough data, interpolation method: ", interpol_method)
 
         # create grid for the wind data
         [nx, ny] = u2d.shape  # for ccs4 this is (640, 710)
@@ -332,7 +336,7 @@ def HRWstreamplot( u2d, v2d, obj_area, interpol_method, color_mode='speed', dens
         #print "X.shape ", Y.shape
         #print Y[:,0]
 
-        print "   calculate color data ", color_mode
+        print("   calculate color data ", color_mode)
         if color_mode == 'speed':
             from numpy import sqrt
             cdata = sqrt(u2d*u2d + v2d*v2d)
@@ -341,11 +345,11 @@ def HRWstreamplot( u2d, v2d, obj_area, interpol_method, color_mode='speed', dens
         elif color_mode == 'v':
             cdata = v2d
         else:
-            print "*** Error in HRW_streamplot (mpop/imageo/HRWimage.py)"
-            print "    unknown color_mode"
+            print("*** Error in HRW_streamplot (mpop/imageo/HRWimage.py)")
+            print("    unknown color_mode")
             quit()
 
-        print "   calculate linewidth ", linewidth_mode
+        print("   calculate linewidth ", linewidth_mode)
         if linewidth_mode == "const":
             linewidth = linewidth_max
         elif linewidth_mode == "scaled":
@@ -354,11 +358,11 @@ def HRWstreamplot( u2d, v2d, obj_area, interpol_method, color_mode='speed', dens
             else:
                 linewidth = 1 + linewidth_max*(cdata) / cdata.max()
         else:
-            print "*** Error in HRW_streamplot (mpop/imageo/HRWimage.py)"
-            print "    unknown linewidth_mode"
+            print("*** Error in HRW_streamplot (mpop/imageo/HRWimage.py)")
+            print("    unknown linewidth_mode")
             quit()
 
-        print "... data_max =", cdata.max() ,", vmax=", vmax
+        print("... data_max =", cdata.max() ,", vmax=", vmax)
 
         if vmax != None:
             norm = Normalize(vmin=0, vmax=vmax)
@@ -435,7 +439,7 @@ def HRWscatterplot( HRW_data, title='', hrw_channels=None, min_correlation=None,
 
     p = percentile(HRW_data.wind_speed, 95)
     vmax = (round(p/10)+1)*10
-    print "... vmax:", vmax 
+    print("... vmax:", vmax) 
 
     plt.plot([0,vmax], [680,680], color='g')
     plt.plot([0,vmax], [440,440], color='b')
@@ -455,10 +459,10 @@ def HRWscatterplot( HRW_data, title='', hrw_channels=None, min_correlation=None,
 
 def HRW_2dfield( HRW_data, obj_area, interpol_method=None, hrw_channels=None, min_correlation=None, level=''):
 
-    print "... calculate 2d wind field (HRW_2dfield)"
+    print("... calculate 2d wind field (HRW_2dfield)")
 
     if min_correlation != None:
-        print "    filter for min_correlation = ", min_correlation
+        print("    filter for min_correlation = ", min_correlation)
         inds = where(HRW_data.correlation > min_correlation)
         HRW_data.subset(inds)
 
@@ -493,7 +497,7 @@ def HRW_2dfield( HRW_data, obj_area, interpol_method=None, hrw_channels=None, mi
     if interpol_method == None:
         # we need at least 2 winds to interpolate 
         if uu.size < 4:  
-            print "*** Warning, not wnough wind data available, n_winds = ", uu.size
+            print("*** Warning, not wnough wind data available, n_winds = ", uu.size)
             fake = empty(grid_x.shape)
             fake[:,:] = nan
             HRW_data.interpol_method = None
@@ -510,59 +514,59 @@ def HRW_2dfield( HRW_data, obj_area, interpol_method=None, hrw_channels=None, mi
     #interpol_method = "kriging"
     #interpol_method = "..."
 
-    print "... min windspeed (org data): ", HRW_data.wind_speed.min()
-    print "... max windspeed (org data): ", HRW_data.wind_speed.max()
+    print("... min windspeed (org data): ", HRW_data.wind_speed.min())
+    print("... max windspeed (org data): ", HRW_data.wind_speed.max())
 
     for i_iteration in [0,1]:
 
         if interpol_method == "nearest":
 
-            print '... fill with nearest neighbour'
+            print('... fill with nearest neighbour')
             # griddata, see http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.interpolate.griddata.html
             grid_u1x = griddata(points, uu, (grid_x, grid_y), method='nearest')
             grid_v1x = griddata(points, vv, (grid_x, grid_y), method='nearest')
 
         elif interpol_method == "RBF":
 
-            print '... inter- and extrapolation using radial basis functions'
+            print('... inter- and extrapolation using radial basis functions')
             # https://www.youtube.com/watch?v=_cJLVhdj0j4
-            print "... start Rbf"
+            print("... start Rbf")
             from scipy.interpolate import Rbf
             # rbfu = Rbf(xx, yy, uu, epsilon=0.1) #
             rbfu = Rbf(xx, yy, uu, epsilon=0.2)
             grid_u1x = rbfu(grid_x, grid_y)
             rbfv = Rbf(xx, yy, vv, epsilon=0.1) #
             grid_v1x = rbfv(grid_x, grid_y)
-            print "... finish Rbf"
+            print("... finish Rbf")
             # !very! slow for a large number of observations 
 
         elif interpol_method == "linear + nearest" or interpol_method == "cubic + nearest":
 
             if interpol_method == "linear + nearest":
-                print '... calculate linear interpolation'
+                print('... calculate linear interpolation')
                 # griddata, see http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.interpolate.griddata.html
                 grid_u1 = griddata(points, uu, (grid_x, grid_y), method='linear')
                 grid_v1 = griddata(points, vv, (grid_x, grid_y), method='linear')
             elif interpol_method == "cubic + nearest":
                 # smoother, but can cause unrealistic overshoots
-                print '... calculate cubic interpolation'
+                print('... calculate cubic interpolation')
                 grid_u1 = griddata(points, uu, (grid_x, grid_y), method='cubic')
                 grid_v1 = griddata(points, vv, (grid_x, grid_y), method='cubic')
             else:
-                print "*** Error in mpop/imageo/HRWimage.py"
-                print "    unknown interpolation method: ", interpol_method
+                print("*** Error in mpop/imageo/HRWimage.py")
+                print("    unknown interpolation method: ", interpol_method)
                 quit()
 
             if 1==1:
                 # use faster function to extrapolate with closest neighbour
-                print "... fill outside area with closest value"
+                print("... fill outside area with closest value")
                 grid_u1x = fill_with_closest_pixel(grid_u1, invalid=None) 
                 grid_v1x = fill_with_closest_pixel(grid_v1, invalid=None) 
             else:
                 # use griddata to extrapolate with closest neighbour
                 points2 = transpose(append([grid_x.flatten()], [grid_y.flatten()], axis=0))
-                print type(grid_x.flatten()), grid_x.flatten().shape
-                print type(points2), points2.shape
+                print(type(grid_x.flatten()), grid_x.flatten().shape)
+                print(type(points2), points2.shape)
                 mask = ~isnan(grid_v1.flatten())
                 inds = where(mask)[0]
                 grid_u1x = griddata(points2[inds], grid_u1.flatten()[inds], (grid_x, grid_y), method='nearest')
@@ -579,13 +583,13 @@ def HRW_2dfield( HRW_data, obj_area, interpol_method=None, hrw_channels=None, mi
                 yy = append(yy, y_add)
                 points = transpose(append([yy], [xx], axis=0))
 
-                print 'calc extent1'
+                print('calc extent1')
                 grid_u1e = griddata(points, uu, (grid_x, grid_y), method='linear')
                 grid_v1e = griddata(points, vv, (grid_x, grid_y), method='linear')
 
         else:
-            print "*** Error in mpop/imageo/HRWimage.py"
-            print "    unknown interpol_method", interpol_method
+            print("*** Error in mpop/imageo/HRWimage.py")
+            print("    unknown interpol_method", interpol_method)
             quit()
 
         ##http://docs.scipy.org/doc/scipy/reference/tutorial/interpolate.html
@@ -625,7 +629,7 @@ def HRW_2dfield( HRW_data, obj_area, interpol_method=None, hrw_channels=None, mi
 
         # show different stages of 2d inter- and extra-polation 
         if 1==0:
-            print 'make matplotlib.pyplot'
+            print('make matplotlib.pyplot')
             import matplotlib.pyplot as plt
             vmin=-10
             vmax=10
@@ -642,7 +646,7 @@ def HRW_2dfield( HRW_data, obj_area, interpol_method=None, hrw_channels=None, mi
             #plt.colorbar()
 
             # standard calculation for comparison 
-            print '... calculate linear interpolation'
+            print('... calculate linear interpolation')
             grid_u1 = griddata(points, uu, (grid_x, grid_y), method='linear')
             grid_v1 = griddata(points, vv, (grid_x, grid_y), method='linear')
             grid_u1xx = fill_with_closest_pixel(grid_u1, invalid=None) 
@@ -663,17 +667,17 @@ def HRW_2dfield( HRW_data, obj_area, interpol_method=None, hrw_channels=None, mi
             #plt.show()  # does not work with AGG
             tmpfile="test_hrw"+level+".png"
             fig.savefig(tmpfile)
-            print "display "+tmpfile+" &"
+            print("display "+tmpfile+" &")
 
 
         if grid_u1x.min() < -150 or grid_v1x.min() < -150 or grid_u1x.max() > 150 or grid_v1x.max() > 150:
-            print "*** Warning, numerical instability detected, interpolation method: ", interpol_method
-            print "    min u windspeed (u 2dimensional): ", grid_u1x.min()
-            print "    min v windspeed (v 2dimensional): ", grid_v1x.min()
-            print "    max u windspeed (u 2dimensional): ", grid_u1x.max()
-            print "    max v windspeed (v 2dimensional): ", grid_v1x.max()
+            print("*** Warning, numerical instability detected, interpolation method: ", interpol_method)
+            print("    min u windspeed (u 2dimensional): ", grid_u1x.min())
+            print("    min v windspeed (v 2dimensional): ", grid_v1x.min())
+            print("    max u windspeed (u 2dimensional): ", grid_u1x.max())
+            print("    max v windspeed (v 2dimensional): ", grid_v1x.max())
             interpol_method = "glinear + nearest"
-            print "... try another interpolation method: ", interpol_method
+            print("... try another interpolation method: ", interpol_method)
         else:
             # (hopefully) numerical stable interpolation, exit the interpolation loop
             break 

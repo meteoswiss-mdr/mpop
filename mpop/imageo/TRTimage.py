@@ -1,3 +1,6 @@
+from __future__ import division
+from __future__ import print_function
+
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 #import matplotlib as mpl
@@ -84,7 +87,7 @@ def TRTimage( TRTcell_IDs, TRTcells, obj_area, minRank=8, alpha_max=1.0, plot_ve
         if TRTcell_ID is not None:
             if cell != TRTcell_ID:
                 continue
-            print "plot specific cell", cell
+            print("plot specific cell", cell)
             
         if TRTcells[cell].RANKr >= minRank:
 
