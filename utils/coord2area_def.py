@@ -1,3 +1,6 @@
+from __future__ import division
+from __future__ import print_function
+
 # Copyright (c) 2012, 2015
 #
 
@@ -102,19 +105,19 @@ if __name__ == '__main__':
     proj4_string = "+" + \
         " +".join(("proj=" + proj + ",lat_0=" + str(lat_0) + ",lon_0=" + str(lon_0) + ",ellps=WGS84").split(","))
 
-    print proj4_string
+    print(proj4_string)
 
-    print "REGION:", name, "{"
-    print "\tNAME:\t", name
-    print "\tPCS_ID:\t", proj + "_" + str(lon_0) + "_" + str(lat_0)
-    print ("\tPCS_DEF:\tproj=" + proj +
+    print("REGION:", name, "{")
+    print("\tNAME:\t", name)
+    print("\tPCS_ID:\t", proj + "_" + str(lon_0) + "_" + str(lat_0))
+    print(("\tPCS_DEF:\tproj=" + proj +
            ",lat_0=" + str(lat_0) +
            ",lon_0=" + str(lon_0) +
-           ",ellps=WGS84")
-    print "\tXSIZE:\t", xsize
-    print "\tYSIZE:\t", ysize
-    print "\tAREA_EXTENT:\t", area_extent
-    print "};"
+           ",ellps=WGS84"))
+    print("\tXSIZE:\t", xsize)
+    print("\tYSIZE:\t", ysize)
+    print("\tAREA_EXTENT:\t", area_extent)
+    print("};")
 
     if args.shapes is None:
         sys.exit(0)

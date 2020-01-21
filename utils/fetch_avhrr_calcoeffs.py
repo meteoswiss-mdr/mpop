@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 
-import urllib2
+from __future__ import division
+from __future__ import print_function
+try:
+    from urllib2 import urlopen
+except ImportError:
+    from urllib.request import urlopen
+    
 import h5py
 import datetime as dt
 import os.path
@@ -35,7 +41,7 @@ URLS = {
 
 def get_page(url):
     '''Retrieve the given page.'''
-    return urllib2.urlopen(url).read()
+    return urlopen(url).read()
 
 def get_coeffs(page):
     '''Parse coefficients from the page.'''
@@ -87,12 +93,12 @@ def get_all_coeffs():
     '''Get all available calibration coefficients for the satellites.'''
     coeffs = {}
 
-    for platform in URLS.keys():
+    for platform in list(URLS.keys()):
         if platform not in coeffs:
             coeffs[platform] = {}
-        for chan in URLS[platform].keys():
+        for chan in list(URLS[platform].keys()):
             url = URLS[platform][chan]
-            print url
+            print(url)
             page = get_page(url)
             coeffs[platform][chan] = get_coeffs(page)
 
@@ -100,11 +106,11 @@ def get_all_coeffs():
 
 def save_coeffs(coeffs, out_dir=''):
     '''Save calibration coefficients to HDF5 files.'''
-    for platform in coeffs.keys():
+    for platform in list(coeffs.keys()):
         fname = os.path.join(out_dir, "%s_calibration_data.h5" % platform)
         fid = h5py.File(fname, 'w')
         
-        for chan in coeffs[platform].keys():
+        for chan in list(coeffs[platform].keys()):
             fid.create_group(chan)
             fid[chan]['datetime'] = coeffs[platform][chan]['datetime']
             fid[chan]['slope1'] = coeffs[platform][chan]['slope1']
@@ -113,7 +119,7 @@ def save_coeffs(coeffs, out_dir=''):
             fid[chan]['intercept2'] = coeffs[platform][chan]['intercept2']
 
         fid.close()
-        print "Calibration coefficients saved for %s" % platform
+        print("Calibration coefficients saved for %s" % platform)
 
 def main():
     '''Create calibration coefficient files for AVHRR'''
