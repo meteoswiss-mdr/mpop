@@ -1,6 +1,3 @@
-from __future__ import division
-from __future__ import print_function
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -33,6 +30,9 @@ TODO:
  - cleanup
 
 """
+from __future__ import division
+from __future__ import print_function
+
 import numpy as np
 from mipp.xrit.MSG import (read_proheader, read_epiheader,
                            _Calibrator, read_metadata)

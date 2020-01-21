@@ -1,8 +1,8 @@
+"""Loader for MSG, netcdf format.
+"""
 from __future__ import division
 from __future__ import print_function
 
-"""Loader for MSG, netcdf format.
-"""
 from ConfigParser import ConfigParser
 from mpop import CONFIG_PATH
 import os

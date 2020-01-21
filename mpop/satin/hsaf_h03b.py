@@ -1,6 +1,3 @@
-from __future__ import division
-from __future__ import print_function
-
 """
 Reader for EUMETSATs Hydrology SAF (HSAF) h03 product
 HSAF website http://hsaf.meteoam.it
@@ -18,6 +15,8 @@ possible accepted formats for this reader are:
 - Initial version: 
   2015-07-23 Ulrich Hamann (MeteoSwiss)
 """
+from __future__ import division
+from __future__ import print_function
 
 from mpop import CONFIG_PATH
 from ConfigParser import ConfigParser

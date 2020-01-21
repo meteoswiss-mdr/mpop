@@ -1,6 +1,3 @@
-from __future__ import division
-from __future__ import print_function
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -25,6 +22,8 @@ from __future__ import print_function
 
 """A reader for the OSISAF SST netCDF format
 """
+from __future__ import division
+from __future__ import print_function
 
 import os.path
 from ConfigParser import ConfigParser

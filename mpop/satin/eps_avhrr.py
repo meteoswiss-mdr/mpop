@@ -1,6 +1,3 @@
-from __future__ import division
-from __future__ import print_function
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2010, 2012, 2014.
@@ -34,6 +31,10 @@ dDocName=PDF_TEN_96167-EPS-GPFS&RevisionSelectionMethod=LatestReleased
 http://www.eumetsat.int/idcplg?IdcService=GET_FILE&\
 dDocName=PDF_TEN_97231-EPS-AVHRR&RevisionSelectionMethod=LatestReleased
 """
+
+from __future__ import division
+from __future__ import print_function
+
 import struct
 import datetime
 import numpy as np

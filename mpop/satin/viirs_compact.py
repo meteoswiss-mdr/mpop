@@ -1,6 +1,3 @@
-from __future__ import division
-from __future__ import print_function
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -25,6 +22,8 @@ from __future__ import print_function
 
 """Compact viirs format.
 """
+from __future__ import division
+from __future__ import print_function
 
 import h5py
 import numpy as np

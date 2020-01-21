@@ -1,6 +1,3 @@
-from __future__ import division
-from __future__ import print_function
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2011, 2013, 2014.
@@ -30,6 +27,8 @@ from __future__ import print_function
 
 """Plugin for reading AQUA MODIS level 2 EOS HDF files downloaded from NASA FTP import
 """
+from __future__ import division
+from __future__ import print_function
 
 import os.path
 from ConfigParser import ConfigParser

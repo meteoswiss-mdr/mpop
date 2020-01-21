@@ -1,6 +1,3 @@
-from __future__ import division
-from __future__ import print_function
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -25,7 +22,8 @@ from __future__ import print_function
 
 """Reads a format from an xml file to create dtypes and scaling factor arrays.
 """
-
+from __future__ import division
+from __future__ import print_function
 
 from xml.etree.ElementTree import ElementTree
 

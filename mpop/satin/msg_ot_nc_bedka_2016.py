@@ -22,7 +22,6 @@ import logging
 #LOG = logging(__name__)
 
 
-
 def load(satscene, *args, **kwargs):
     """Loads the *channels* into the satellite *scene*.
     """

@@ -1,6 +1,3 @@
-from __future__ import division
-from __future__ import print_function
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2010, 2012, 2014.
@@ -32,6 +29,9 @@ from __future__ import print_function
 
 # You should have received a copy of the GNU General Public License along with
 # mpop.  If not, see <http://www.gnu.org/licenses/>.
+
+from __future__ import division
+from __future__ import print_function
 
 """Plugin for reading NWCSAF MSG products hdf files.
 """
