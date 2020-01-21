@@ -61,7 +61,7 @@ def load_odyssey_composite(filename):
 
 
       #>>> for f in hfile['what'].attrs.keys():
-      #...  print "hfile['what'].attrs['",f,"']=", hfile['what'].attrs[f]
+      #...  print ("hfile['what'].attrs['",f,"']=", hfile['what'].attrs[f])
       #
       #hfile['what'].attrs[' object ']= COMP
       #hfile['what'].attrs[' version ']= H5rad 2.0
@@ -70,7 +70,7 @@ def load_odyssey_composite(filename):
       #hfile['what'].attrs[' source ']= ORG:247
 
       #>>> for f in hfile['where'].attrs.keys():
-      #...  print "hfile['where'].attrs['",f,"']=", hfile['where'].attrs[f]
+      #...  print ("hfile['where'].attrs['",f,"']=", hfile['where'].attrs[f])
       #
       #hfile['where'].attrs[' projdef ']= +proj=laea +lat_0=55.0 +lon_0=10.0 +x_0=1950000.0 +y_0=-2100000.0 +units=m +ellps=WGS84
       #hfile['where'].attrs[' xsize ']= 1900
@@ -90,7 +90,7 @@ def load_odyssey_composite(filename):
       # list of radar in composite
 
       #>>> for f in hfile['dataset1']['what'].attrs.keys():
-      #...  print "hfile['dataset1'][what].attrs['",f,"']=", hfile['dataset1']['what'].attrs[f]
+      #...  print ("hfile['dataset1'][what].attrs['",f,"']=", hfile['dataset1']['what'].attrs[f])
       #
       #hfile['dataset1'][what].attrs[' product ']= COMP
       #hfile['dataset1'][what].attrs[' startdate ']= 20151201
@@ -103,7 +103,7 @@ def load_odyssey_composite(filename):
       #hfile['dataset1'][what].attrs[' nodata ']= -9999000.0
       #hfile['dataset1'][what].attrs[' undetect ']= -8888000.0
       #>>> for f in hfile['dataset2']['what'].attrs.keys():
-      #...  print "hfile['dataset2'][what].attrs['",f,"']=", hfile['dataset2']['what'].attrs[f]
+      #...  print ("hfile['dataset2'][what].attrs['",f,"']=", hfile['dataset2']['what'].attrs[f])
       #
       #hfile['dataset2'][what].attrs[' product ']= COMP
       #hfile['dataset2'][what].attrs[' startdate ']= 20151201

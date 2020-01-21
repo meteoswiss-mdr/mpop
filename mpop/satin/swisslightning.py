@@ -121,8 +121,8 @@ def load(satscene, *args, **kwargs):
         # Read variable corresponding to channel name
         print("... channel to read ", chn_name)
         if chn_name == 'dens':
-            #print "lightning.py: ", type(dens)
-            #print "lightning.py: ", dens.data.shape
+            #print ("lightning.py: ", type(dens))
+            #print ("lightning.py: ", dens.data.shape)
             satscene[chn_name] = dens
         elif chn_name == 'densIC':
             satscene[chn_name] = densIC
@@ -259,7 +259,7 @@ def readLightning(file, NEAR_REAL_TIME, time_slot, dt=5, area='ccs4'):
         for i, j, YYYY, MM, DD, hh, mm, ss, ltype, curr in zip(iCH, jCH, years, months, days, hours, mins, secs, intra, current):
             t_light = datetime.datetime(int(YYYY), int(MM), int(DD), int(hh), int(mm), int(float(ss)) ) 
             if ( t_light < time_slot and time_slot-t_light < dtime ):
-                #print "   ", str(t_light), " ", str(time_slot), " ", str(time_slot-t_light), "   ", ltype, "          ", curr
+                #print ("   ", str(t_light), " ", str(time_slot), " ", str(time_slot-t_light), "   ", ltype, "          ", curr)
                 if 0<i and i<ni and 0<j and j<nj:
                     dens[i,j]+=1
                     curr_abs[i,j]+=abs(curr)
@@ -268,10 +268,10 @@ def readLightning(file, NEAR_REAL_TIME, time_slot, dt=5, area='ccs4'):
                     else:
                         curr_pos[i,j]+=curr
                     if ltype == 'IC' or ltype == 1:
-                        #print "... only intra clouds lightnings", YYYY, MM, DD, hh, mm, ltype
+                        #print ("... only intra clouds lightnings", YYYY, MM, DD, hh, mm, ltype)
                         densIC[i,j]+=1  
                     if ltype=='CG' or ltype==0:
-                        #print "... only clouds2ground lightnings", YYYY, MM, DD, hh, mm, ltype
+                        #print ("... only clouds2ground lightnings", YYYY, MM, DD, hh, mm, ltype)
                         densCG[i,j]+=1
             if time_slot + dtime < t_light :
                 break
@@ -293,7 +293,7 @@ def add_lightning(prop, i, j, dx, form):
                                   'circle' -> lightning is counted in a circle
     """
 
-    # print "add lightning at", i, j
+    # print ("add lightning at", i, j)
     if form == 'square':
         # mark a square 
         prop[i-dx:i+dx,j-dx:j+dx]+=1
@@ -304,11 +304,11 @@ def add_lightning(prop, i, j, dx, form):
         x = arange(0, 710)  # 709-
         y = arange(0, 640)
         X, Y = meshgrid(x, y)
-        #print X
-        #print Y        
-        #print X.shape
-        #print Y.shape
-        #print lightnings.shape
+        #print (X)
+        #print (Y)        
+        #print (X.shape)
+        #print (Y.shape)
+        #print (lightnings.shape)
         interior = ((X-j)**2 + (Y-i)**2) < rr**2
         prop+=1*interior
     else:
@@ -328,7 +328,7 @@ def unfold_lightning(prop, dx, form):
     import numpy.ma as ma
 
 
-    # print "unfold_lightning at", i, j
+    # print ("unfold_lightning at", i, j)
     if form == 'square':
         if dx != 1:
             print("... counting lightning per square with edge lengths of ", dx, " km")
@@ -352,25 +352,25 @@ def unfold_lightning(prop, dx, form):
         print('... apply gauss filter with half width of (0.5*', dx, ") km")
             # tuned that it looks similar to the circle with the same dx
         data = ma.asarray( ndimage.gaussian_filter(prop, 0.5*dx, output=np.float32) )
-        #print "unfold_lightning (lighting.py) min/max = ", data.min(), data.max()
+        #print ("unfold_lightning (lighting.py) min/max = ", data.min(), data.max())
         d_min=0.001
         print("... neglect small values below ", d_min)
         data=ma.masked_less(data, d_min)
-        #print "unfold_lightning (lighting.py) min/max = ", data.min(), data.max()
+        #print ("unfold_lightning (lighting.py) min/max = ", data.min(), data.max())
         return data
 
     elif form == 'gaussgauss':
         from scipy import ndimage
-        #print "unfold_lightning (lighting.py) min/max = ", prop.min(), prop.max()
+        #print ("unfold_lightning (lighting.py) min/max = ", prop.min(), prop.max())
         print('... apply DOUBLE gauss filter with half width of (0.5*', dx, ") km")
             # tuned that it looks similar to the circle with the same dx
         prop = ndimage.gaussian_filter(prop, 0.5*dx)
         data = ma.asarray( ndimage.gaussian_filter(prop, 0.5*dx, output=np.float32) )
-        #print "unfold_lightning (lighting.py) min/max = ", data.min(), data.max()
+        #print ("unfold_lightning (lighting.py) min/max = ", data.min(), data.max())
         d_min=0.001
         print("... neglect values below ", d_min)
         data=ma.masked_less(data, d_min)
-        #print "unfold_lightning (lighting.py) min/max = ", data.min(), data.max()
+        #print ("unfold_lightning (lighting.py) min/max = ", data.min(), data.max())
         return data
 
 
@@ -565,10 +565,10 @@ def convert_THXprod_nc_daily_direct(input_file_path, output_file_path, date_obj,
                 else:
                     THX_array_curr[ti,2,i,j]+=curr
                 if ltype == 'IC' or ltype == 1:
-                    #print "... only intra clouds lightnings", YYYY, MM, DD, hh, mm, ltype
+                    #print ("... only intra clouds lightnings", YYYY, MM, DD, hh, mm, ltype)
                     THX_array_dens[ti,1,i,j]+=1  
                 if ltype=='CG' or ltype==0:
-                    #print "... only clouds2ground lightnings", YYYY, MM, DD, hh, mm, ltype
+                    #print ("... only clouds2ground lightnings", YYYY, MM, DD, hh, mm, ltype)
                     THX_array_dens[ti,2,i,j]+=1
             #if t0 + dtime < t_light :
             #    break

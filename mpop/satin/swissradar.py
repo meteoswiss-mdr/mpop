@@ -93,9 +93,9 @@ def load(satscene, *args, **kwargs):
             print("*** Warning, more than 1 datafile found: ", filenames)
             ## for echotop select the correct file
             #if values["product"] == 'EZC':
-            #    print "*** TO BE IMPLEMENTED: Choose correct file for EchoTOP", filenames                 
+            #    print ("*** TO BE IMPLEMENTED: Choose correct file for EchoTOP", filenames)                 
             #else:
-            #    print "*** Warning, more than 1 datafile found: ", filenames 
+            #    print ("*** Warning, more than 1 datafile found: ", filenames)
         filename = filenames[0]
 
         print(("... read data from %s" % str(filename)))								 
@@ -176,8 +176,8 @@ def convertToValue(im, scale):
     #print r, g, b
    
     colorscale = np.loadtxt(scale, skiprows=1)
-    #print "Colorscale: "
-    #print colorscale
+    #print ("Colorscale: ")
+    #print (colorscale)
     translate = dict(list(zip(list(zip(colorscale[:, 1], colorscale[:,2], colorscale[:,3])), colorscale[:,-1])))
 
     #translate.get(rgb_im.getdata()[100], 500)  # 500 is the null value, in case the value is not found in the dictionary

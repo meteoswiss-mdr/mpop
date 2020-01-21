@@ -45,7 +45,7 @@ def load(satscene, *args, **kwargs):
     satscene.min_ot_probability = float(conf.get("Overshooting_Tops-level2", "min_ot_probability"))
     satscene.min_ot_anvilmean_brightness_temperature_difference = float(conf.get("Overshooting_Tops-level2", "min_ot_anvilmean_brightness_temperature_difference"))
 
-    # print values
+    # print (values)
     if "area" in kwargs:
         projectionName = kwargs["area"]
     else:
@@ -53,7 +53,7 @@ def load(satscene, *args, **kwargs):
         #projectionName = "ccs4"
         
     #scale = conf.get("radar-1", "scale")
-    #print '... read scale from: ', scale
+    #print ('... read scale from: ', scale)
 
     timeslot_end_obs = satscene.time_slot + datetime.timedelta(minutes=4)
 
@@ -122,7 +122,7 @@ def load(satscene, *args, **kwargs):
                    max(right_ex1, right_ex2),
                    min(up_ex1,    up_ex2))
     
-    #print area_extent
+    #print (area_extent)
     proj_dict = {'proj': 'eqc', 'lon_0': '0.0', 'lat_0': '0.0'}
 
     from pyresample.geometry import AreaDefinition
@@ -133,7 +133,7 @@ def load(satscene, *args, **kwargs):
                               len(lons),
                               len(lats),
                               area_extent)
-    #print area_def
+    #print (area_def)
     satscene.area = area_def
     
     if satscene.min_ot_probability > 0.0:
@@ -165,7 +165,7 @@ def load(satscene, *args, **kwargs):
             satscene[chn_name] = dens_pc
             # get projection 
             projection = pyresample.load_area(os.path.join(CONFIG_PATH, "areas.def"), projectionName)
-            #print projection
+            #print (projection)
             satscene.area = projection
             
 
@@ -210,7 +210,7 @@ def lon_lat_to_dens(lons, lats, obj_area):
         iCH = [iCH]
 
     for i, j in zip(iCH, jCH):
-        #print "   ", str(t_light), " ", str(time_slot), " ", str(time_slot-t_light), "   ", ltype, "          ", curr
+        #print ("   ", str(t_light), " ", str(time_slot), " ", str(time_slot-t_light), "   ", ltype, "          ", curr)
         if 0<i and i<ni and 0<j and j<nj:
             dens[i,j]+=1
 
@@ -336,7 +336,7 @@ def readLightning(file, NEAR_REAL_TIME, time_slot, dt=5, area='ccs4'):
         for i, j, YYYY, MM, DD, hh, mm, ss, ltype, curr in zip(iCH, jCH, years, months, days, hours, mins, secs, intra, current):
             t_light = datetime.datetime(int(YYYY), int(MM), int(DD), int(hh), int(mm), int(float(ss)) ) 
             if ( t_light < time_slot and time_slot-t_light < dtime ):
-                #print "   ", str(t_light), " ", str(time_slot), " ", str(time_slot-t_light), "   ", ltype, "          ", curr
+                #print ("   ", str(t_light), " ", str(time_slot), " ", str(time_slot-t_light), "   ", ltype, "          ", curr)
                 if 0<i and i<ni and 0<j and j<nj:
                     dens[i,j]+=1
                     curr_abs[i,j]+=abs(curr)
@@ -345,10 +345,10 @@ def readLightning(file, NEAR_REAL_TIME, time_slot, dt=5, area='ccs4'):
                     else:
                         curr_pos[i,j]+=curr
                     if ltype == 'IC' or ltype == 1:
-                        #print "... only intra clouds lightnings", YYYY, MM, DD, hh, mm, ltype
+                        #print ("... only intra clouds lightnings", YYYY, MM, DD, hh, mm, ltype)
                         densIC[i,j]+=1  
                     if ltype=='CG' or ltype==0:
-                        #print "... only clouds2ground lightnings", YYYY, MM, DD, hh, mm, ltype
+                        #print ("... only clouds2ground lightnings", YYYY, MM, DD, hh, mm, ltype)
                         densCG[i,j]+=1
             if time_slot + dtime < t_light :
                 break
@@ -370,7 +370,7 @@ def add_lightning(prop, i, j, dx, form):
                                   'circle' -> lightning is counted in a circle
     """
 
-    # print "add lightning at", i, j
+    # print ("add lightning at", i, j)
     if form == 'square':
         # mark a square 
         prop[i-dx:i+dx,j-dx:j+dx]+=1
@@ -381,11 +381,11 @@ def add_lightning(prop, i, j, dx, form):
         x = arange(0, 710)  # 709-
         y = arange(0, 640)
         X, Y = meshgrid(x, y)
-        #print X
-        #print Y        
-        #print X.shape
-        #print Y.shape
-        #print lightnings.shape
+        #print (X)
+        #print (Y)        
+        #print (X.shape)
+        #print (Y.shape)
+        #print (lightnings.shape)
         interior = ((X-j)**2 + (Y-i)**2) < rr**2
         prop+=1*interior
     else:
@@ -405,7 +405,7 @@ def unfold_lightning(prop, dx, form):
     import numpy.ma as ma
 
 
-    # print "unfold_lightning at", i, j
+    # print ("unfold_lightning at", i, j)
     if form == 'square':
         if dx != 1:
             print("... counting lightning per square with edge lengths of ", dx, " km")

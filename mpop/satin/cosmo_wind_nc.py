@@ -179,8 +179,8 @@ def load(satscene, **kwargs):
         #lon_1 = ds.variables['lon_1']
         #lat_1 = ds.variables['lat_1']
 
-        #print x_1[:], len(x_1)
-        #print y_1[:], len(y_1)
+        #print (x_1[:], len(x_1))
+        #print (y_1[:], len(y_1))
         print(z_1[:])
 
         if hasattr(satscene, 'forecast_time'):
@@ -201,10 +201,10 @@ def load(satscene, **kwargs):
             data = data[:, :, ::-1, :]             # dimensions: time, z, y, x
 
             long_name = ds.variables[chn_name].getncattr("long_name")
-            #print "... long_name ", long_name
+            #print ("... long_name ", long_name)
 
             FillValue = ds.variables[chn_name].getncattr("_FillValue")
-            #print "... FillValue ", FillValue
+            #print ("... FillValue ", FillValue)
             data = ma.masked_equal( data, FillValue )
 
             print('... '+long_name+".min()/max(): ",data.min(),data.max())
@@ -213,7 +213,7 @@ def load(satscene, **kwargs):
             units = ds.variables[chn_name].getncattr("units")
             if units=="1":
                 units=None
-            #print "... units ", units
+            #print ("... units ", units)
 
             coordinates = ds.variables[chn_name].getncattr("coordinates")
 
@@ -248,16 +248,16 @@ def load(satscene, **kwargs):
                 satscene[var_name].forecast_time = array(ftime)
 
                 #if chn_name not in satscene:
-                #    print "add first data entry"
-                #    print data.shape, data[0,0,:,:].shape
+                #    print ("add first data entry")
+                #    print (data.shape, data[0,0,:,:].shape)
                 #    satscene[chn_name].data = ma.asarray(data[0,0,:,:])
                 #    satscene[chn_name].forecast_time = array(ftime)
                 #else:
-                #    print "concatinate two arrays (first dimension is time)"
+                #    print ("concatinate two arrays (first dimension is time)")
                 #    satscene[chn_name].data = stack([data[0,:,:,:],satscene[chn_name].data[0,:,:,:]], axis=0)
                 #    satscene[chn_name].forecast_time = append(satscene[chn_name].forecast_time,ftime)
-                #    #print satscene[chn_name].data.shape
-                #    #print satscene[chn_name].forecast_time
+                #    #print (satscene[chn_name].data.shape)
+                #    #print (satscene[chn_name].forecast_time)
 
                 if units != None:
                     satscene[var_name].info['units'] = units

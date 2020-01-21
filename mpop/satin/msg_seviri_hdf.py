@@ -219,15 +219,15 @@ def load(satscene, calibrate=True, area_extent=None, **kwargs):
                                       (VIS_IRNorthLine-VIS_IRSouthLine)+1,
                                       aex )
 
-        #print area_def
-        #print "REGION:", area_def.area_id, "{"
-        #print "\tNAME:\t", area_def.name
-        #print "\tPCS_ID:\t", area_def.proj_id
-        #print ("\tPCS_DEF:\tproj="+area_def.proj_dict['proj']+", lon_0=" + area_def.proj_dict['lon_0'] + ", a="+area_def.proj_dict['a']+", b="+area_def.proj_dict['b']+", h="+area_def.proj_dict['h'])
-        #print "\tXSIZE:\t", area_def.x_size
-        #print "\tYSIZE:\t", area_def.y_size
-        #print "\tAREA_EXTENT:\t", area_def.area_extent
-        #print "};"
+        #print (area_def)
+        #print ("REGION:", area_def.area_id, "{")
+        #print ("\tNAME:\t", area_def.name)
+        #print ("\tPCS_ID:\t", area_def.proj_id)
+        #print ("\tPCS_DEF:\tproj="+area_def.proj_dict['proj']+", lon_0=" + area_def.proj_dict['lon_0'] + ", a="+area_def.proj_dict['a']+", b="+area_def.proj_dict['b']+", h="+area_def.proj_dict['h']))
+        #print ("\tXSIZE:\t", area_def.x_size)
+        #print ("\tYSIZE:\t", area_def.y_size)
+        #print ("\tAREA_EXTENT:\t", area_def.area_extent)
+        #print ("};")
 
         # copy area to satscene 
         satscene.area = area_def
