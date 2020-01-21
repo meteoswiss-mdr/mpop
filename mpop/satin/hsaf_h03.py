@@ -1,3 +1,6 @@
+from __future__ import division
+from __future__ import print_function
+
 """
 Reader for EUMETSATs Hydrology SAF (HSAF) h03 product
 HSAF website http://hsaf.meteoam.it
@@ -54,16 +57,16 @@ def find_hsaf_h03_files(time_slot, fullname):
             filepattern = time_slot.strftime(conf.get("seviri-level7", "filename",raw=True)) % values
 
         filename_wildcards = os.path.join( filepath, filepattern)
-        print "... search for file: ", filename_wildcards
+        print("... search for file: ", filename_wildcards)
         filenames = glob(str(filename_wildcards))
         
         if len(filenames) == 0:
-            print "*** Warning, no HSAF input file found, try to find file with scan start time instead of end time stamp"
+            print("*** Warning, no HSAF input file found, try to find file with scan start time instead of end time stamp")
         else:
             if len(filenames) > 1:
-                print "*** Warning, more than 1 HSAF input data file found"
+                print("*** Warning, more than 1 HSAF input data file found")
                 for filename in filenames:
-                    print "    ", filename
+                    print("    ", filename)
             # found just one (or more) input file, break loop
             break
     
@@ -79,13 +82,13 @@ def load(satscene, **kargs):
 
     filenames = find_hsaf_h03_files(satscene.time_slot, satscene.fullname)
     if len(filenames) == 0:
-        print "*** Warning, no HSAF input file found, cannot load."
+        print("*** Warning, no HSAF input file found, cannot load.")
         #raise IOError("Error, no HSAF input file found, cannot load.")
         LOG.warning("Warning, no HSAF input file found, cannot load.")
         return -1
     else:
         if len(filenames) > 1:
-            print "*** Warning, more than 1 HSAF input data file found, choose first one: ", filenames[0]
+            print("*** Warning, more than 1 HSAF input data file found, choose first one: ", filenames[0])
         filename = filenames[0]
         
     # possible formats: h03_20150513_1557_rom.grb.gz, h03_20150513_1612_rom.grb, h03_20150513_1612_rom.nc
@@ -104,7 +107,7 @@ def load(satscene, **kargs):
         from ntpath import basename
         infile = filenames[fileformats.index('gz')]
         outfile = '/tmp/'+basename(infile[:-3])
-        print "    unzip ", infile 
+        print("    unzip ", infile) 
         # gunzip -c h03_20150513_1557_rom.grb.gz > h03_20150513_1557_rom.grb
         # call("/bin/gunzip "+ infile                +" 2>&1", shell=True) # dont keep gz file 
         call("/bin/gunzip -c "+ infile+" > "+ outfile  +" 2>&1", shell=True) # keep gz file 
@@ -156,11 +159,11 @@ def read_h03_grib(filename):
     try:
         import pygrib
     except ImportError:
-        print "... module pygrib needs to be installed"
+        print("... module pygrib needs to be installed")
         quit()
 
     # see http://pygrib.googlecode.com/svn/trunk/docs/pygrib-module.html
-    print("... read data from %s" % str(filename))
+    print(("... read data from %s" % str(filename)))
 
     grbs = pygrib.open(filename)
 
@@ -182,12 +185,12 @@ def read_h03_grib(filename):
     data = ma.masked_where(data ==    0.0, data)
     data = ma.masked_where(data == 9999.0, data)
 
-    print '    fill_value: ', 0 
-    print '    units:      ', units
-    print '    long_name:  ', long_name 
-    print '    datatype:   ', type(data)
-    print '    shape:      ', data.shape
-    print '    min/max:    ', data.min(), data.max()
+    print('    fill_value: ', 0) 
+    print('    units:      ', units)
+    print('    long_name:  ', long_name) 
+    print('    datatype:   ', type(data))
+    print('    shape:      ', data.shape)
+    print('    min/max:    ', data.min(), data.max())
 
     return data, _FillValue, units, long_name 
 
@@ -197,20 +200,20 @@ def read_h03_netCDF(filename):
     try:
         from netCDF4 import Dataset
     except ImportError:
-        print "... module netCDF4 needs to be installed"
+        print("... module netCDF4 needs to be installed")
         quit()
 
-    print("... read data from %s" % str(filename))
+    print(("... read data from %s" % str(filename)))
 
     # Load data from netCDF file
     # see also http://netcdf4-python.googlecode.com/svn/trunk/docs/netCDF4-module.html
     ds = Dataset(filename, 'r')
 
     if 'irrate' in ds.variables:
-        print '    found variable irrate'
+        print('    found variable irrate')
         var_name='irrate'            # converted with: cdo -f nc4c -z zip copy infile outfile
     elif 'IRRATE_P30_GSV0' in ds.variables:
-        print '    found variable IRRATE_P30_GSV0'
+        print('    found variable IRRATE_P30_GSV0')
         var_name='IRRATE_P30_GSV0'   # converted with: ncl_convert2nc h03_20150529_0827_rom.grb -e grb -nc4c -cl 9
         #variables:
         #    float IRRATE_P30_GSV0(ygrid_0, xgrid_0) ;
@@ -223,8 +226,8 @@ def read_h03_netCDF(filename):
         #            IRRATE_P30_GSV0:long_name = "Instantaneous rain rate" ;
         #            IRRATE_P30_GSV0:production_status = "Operational test products" ;
         #            IRRATE_P30_GSV0:center = "Rome (RSMC)" ;
-        print '*** Error, does not work for unknown reason'
-        print '    data.mask = (data == _FillValue) | (data == 0.0) produce error'
+        print('*** Error, does not work for unknown reason')
+        print('    data.mask = (data == _FillValue) | (data == 0.0) produce error')
         quit()
 
     #print type(ds.variables[var_name])
@@ -238,20 +241,20 @@ def read_h03_netCDF(filename):
     # Read variable corresponding to channel name
     data = ma.asarray(ds.variables[var_name])
 
-    print '    fill_value: ', ds.variables[var_name]._FillValue 
-    print '    units:      ', ds.variables[var_name].units
-    print '    long_name:  ', ds.variables[var_name].long_name 
-    print '    datatype:   ', ds.variables[var_name].datatype
-    print '    shape:      ', data.shape
-    print '    min/max:    ', data.min(), data.max()
+    print('    fill_value: ', ds.variables[var_name]._FillValue) 
+    print('    units:      ', ds.variables[var_name].units)
+    print('    long_name:  ', ds.variables[var_name].long_name) 
+    print('    datatype:   ', ds.variables[var_name].datatype)
+    print('    shape:      ', data.shape)
+    print('    min/max:    ', data.min(), data.max())
 
     if len(data.shape) == 3:
         if data.shape[0] == 1:
-            print "   reduce to 2 dimensions (skip time dimension)"
+            print("   reduce to 2 dimensions (skip time dimension)")
             data = ma.asarray(ds.variables[var_name][0,:,:])
         else:
-            print "*** Error, unknown netCDF file format in h03_nc.py"
-            print "    probably more time steps in one file (not implemented yet)"
+            print("*** Error, unknown netCDF file format in h03_nc.py")
+            print("    probably more time steps in one file (not implemented yet)")
             quit()
 
     # mask data for no rain, fill_value and no cloud marker

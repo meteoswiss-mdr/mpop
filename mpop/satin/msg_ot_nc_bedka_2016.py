@@ -1,3 +1,6 @@
+from __future__ import division
+from __future__ import print_function
+
 import Image
 import logging
 import glob
@@ -60,7 +63,7 @@ def load(satscene, *args, **kwargs):
         timeslot_end_obs.strftime(conf.get("Overshooting_Tops-level2", "filename", raw=True)) % values)
    
     # Load data from txt file 
-    print "... read data from", str(filename)
+    print("... read data from", str(filename))
     if len(glob.glob(str(filename))) == 0:
         "*** WARNING, no file "+str(filename)+" found!"
         filename=""
@@ -135,23 +138,23 @@ def load(satscene, *args, **kwargs):
     satscene.area = area_def
     
     if satscene.min_ot_probability > 0.0:
-        print "    min_ot_probability specified by configuration file:", satscene.min_ot_probability
+        print("    min_ot_probability specified by configuration file:", satscene.min_ot_probability)
         satscene.channels_to_load.add("ot_probability")
     if satscene.min_ot_anvilmean_brightness_temperature_difference > 0.0:
-        print "... min_ot_anvilmean_brightness_temperature_difference specified by configuration file:", satscene.min_ot_anvilmean_brightness_temperature_difference
+        print("... min_ot_anvilmean_brightness_temperature_difference specified by configuration file:", satscene.min_ot_anvilmean_brightness_temperature_difference)
         satscene.channels_to_load.add("ot_anvilmean_brightness_temperature_difference")
     
-    print "... channels to load ", satscene.channels_to_load
+    print("... channels to load ", satscene.channels_to_load)
     for chn_name in satscene.channels_to_load:
     
         # Read variable corresponding to channel name
-        print "... channel to read ", chn_name
+        print("... channel to read ", chn_name)
         if chn_name in vars_3d:
             netCDF_data = fh.variables[chn_name]
             satscene[chn_name] = ma.array(netCDF_data[0,:,:]) # skip the first dimension, which is time (in test dataset only 1 entry)
-            print "    "+chn_name, satscene[chn_name].data.min(), satscene[chn_name].data.max()
-            if u"units" in netCDF_data.ncattrs():
-              satscene[chn_name].info['units'] = netCDF_data.getncattr(u'units').replace("degrees_Kelvin","dT/K")
+            print("    "+chn_name, satscene[chn_name].data.min(), satscene[chn_name].data.max())
+            if "units" in netCDF_data.ncattrs():
+              satscene[chn_name].info['units'] = netCDF_data.getncattr('units').replace("degrees_Kelvin","dT/K")
             
         elif chn_name == 'position_parallax_corrected':
             lons_pc = fh.variables['parallax_correction_longitude'][0,:,:]
@@ -170,26 +173,26 @@ def load(satscene, *args, **kwargs):
     if satscene.min_ot_probability > 0.0:
       for chn_name in satscene.channels_to_load:
         if chn_name != 'ir_anvil_detection':
-          print "... filter "+chn_name+" with min_ot_probability = "+str(satscene.min_ot_probability)
+          print("... filter "+chn_name+" with min_ot_probability = "+str(satscene.min_ot_probability))
           satscene[chn_name].data = np.ma.masked_where(
                     satscene["ot_probability"].data < satscene.min_ot_probability, 
                     satscene[chn_name].data)
-          print "    "+chn_name, satscene[chn_name].data.min(), satscene[chn_name].data.max()
+          print("    "+chn_name, satscene[chn_name].data.min(), satscene[chn_name].data.max())
 
     if satscene.min_ot_anvilmean_brightness_temperature_difference > 0.0:
       for chn_name in satscene.channels_to_load:
         if chn_name != 'ir_anvil_detection':      
-          print "... filter "+chn_name+" with min_ot_anvilmean_brightness_temperature_difference = "+str(satscene.min_ot_anvilmean_brightness_temperature_difference)
+          print("... filter "+chn_name+" with min_ot_anvilmean_brightness_temperature_difference = "+str(satscene.min_ot_anvilmean_brightness_temperature_difference))
           satscene[chn_name].data = np.ma.masked_where(
                     satscene["ot_anvilmean_brightness_temperature_difference"].data < satscene.min_ot_anvilmean_brightness_temperature_difference, 
                     satscene[chn_name].data )
-          print "    "+chn_name, satscene[chn_name].data.min(), satscene[chn_name].data.max()
+          print("    "+chn_name, satscene[chn_name].data.min(), satscene[chn_name].data.max())
 
     plot_daytime=True
     if plot_daytime:
         for chn_name in satscene.channels_to_load:
             satscene[chn_name].data.data[:,:] = float(satscene.time_slot.hour) + float(satscene.time_slot.minute)/60.
-            print "*** replace data for "+chn_name+" with daytime", float(satscene.time_slot.hour) + float(satscene.time_slot.minute)/60.
+            print("*** replace data for "+chn_name+" with daytime", float(satscene.time_slot.hour) + float(satscene.time_slot.minute)/60.)
           
 # ---------------------------------------------------------------------------------
 
@@ -309,7 +312,7 @@ def readLightning(file, NEAR_REAL_TIME, time_slot, dt=5, area='ccs4'):
             iCH = (480-ceil(xCH/1000.))  ## 710- ## x/i is in vertical direction         # for Bern 280.0
             jCH = floor(yCH/1000.)-255    # y/j is in horizontal dir.                    # for Bern 345.0
         else:
-            print "... new experimental reprojection"
+            print("... new experimental reprojection")
 
             if True:
                 (jCH, iCH) = obj_area.get_xy_from_lonlat(data['lon'], data['lat'], outside_error=False)       # for Bern (345, 280)
@@ -330,7 +333,7 @@ def readLightning(file, NEAR_REAL_TIME, time_slot, dt=5, area='ccs4'):
         # considered time period 
         dtime = datetime.timedelta(minutes=dt)
 
-        print "--- lightning time        desired time slot     dtime    intra cloud     current[kA]"
+        print("--- lightning time        desired time slot     dtime    intra cloud     current[kA]")
         for i, j, YYYY, MM, DD, hh, mm, ss, ltype, curr in zip(iCH, jCH, years, months, days, hours, mins, secs, intra, current):
             t_light = datetime.datetime(int(YYYY), int(MM), int(DD), int(hh), int(mm), int(float(ss)) ) 
             if ( t_light < time_slot and time_slot-t_light < dtime ):
@@ -351,11 +354,11 @@ def readLightning(file, NEAR_REAL_TIME, time_slot, dt=5, area='ccs4'):
             if time_slot + dtime < t_light :
                 break
     else:
-        print '*** Warning, empty lightning input file '
+        print('*** Warning, empty lightning input file ')
 
-    print '... dens ndim (lightning.py): ', dens.ndim
-    print '... shape (lightning.py): ', dens.shape
-    print '... min/max (lightning.py): ', dens.min(), dens.max()
+    print('... dens ndim (lightning.py): ', dens.ndim)
+    print('... shape (lightning.py): ', dens.shape)
+    print('... min/max (lightning.py): ', dens.min(), dens.max())
 
     return dens, densIC, densCG, curr_abs, curr_neg, curr_pos
 
@@ -387,8 +390,8 @@ def add_lightning(prop, i, j, dx, form):
         interior = ((X-j)**2 + (Y-i)**2) < rr**2
         prop+=1*interior
     else:
-        print '*** ERROR in add_lightning (lightning.py)'
-        print '    unknown form ', form
+        print('*** ERROR in add_lightning (lightning.py)')
+        print('    unknown form ', form)
 
 # ---------------------------------------------------------------------------------
 
@@ -406,14 +409,14 @@ def unfold_lightning(prop, dx, form):
     # print "unfold_lightning at", i, j
     if form == 'square':
         if dx != 1:
-            print "... counting lightning per square with edge lengths of ", dx, " km"
+            print("... counting lightning per square with edge lengths of ", dx, " km")
             # mark a square 
             k = ones([2*dx-1,2*dx-1])
             return ma.asarray( convolve(prop, k, mode="constant", cval=0) ) 
 
     elif form == 'circle':
         if dx != 1:
-            print "... counting lightning inside a circle with a radius of ", dx, " km"
+            print("... counting lightning inside a circle with a radius of ", dx, " km")
             from numpy import arange, meshgrid
             # mark a circle 
             x = arange(0, 2*dx-1) 
@@ -423,25 +426,25 @@ def unfold_lightning(prop, dx, form):
 
     elif form == 'gauss':
         from scipy import ndimage
-        print "unfold_lightning (lighting.py) min/max = ", prop.min(), prop.max()
-        print '... apply gauss filter with half width of (0.5*', dx, ") km"
+        print("unfold_lightning (lighting.py) min/max = ", prop.min(), prop.max())
+        print('... apply gauss filter with half width of (0.5*', dx, ") km")
             # tuned that it looks similar to the circle with the same dx
         data = ma.asarray( ndimage.gaussian_filter(prop, 0.5*dx) )
-        print "unfold_lightning (lighting.py) min/max = ", data.min(), data.max()
+        print("unfold_lightning (lighting.py) min/max = ", data.min(), data.max())
         return ma.masked_less(data, 0.001)
 
     elif form == 'gaussgauss':
         from scipy import ndimage
-        print "unfold_lightning (lighting.py) min/max = ", prop.min(), prop.max()
-        print '... apply gauss filter with half width of (0.5*', dx, ") km"
+        print("unfold_lightning (lighting.py) min/max = ", prop.min(), prop.max())
+        print('... apply gauss filter with half width of (0.5*', dx, ") km")
             # tuned that it looks similar to the circle with the same dx
         prop = ndimage.gaussian_filter(prop, 0.5*dx)
         data = ma.asarray( ndimage.gaussian_filter(prop, 0.5*dx) )
-        print "unfold_lightning (lighting.py) min/max = ", data.min(), data.max()
+        print("unfold_lightning (lighting.py) min/max = ", data.min(), data.max())
         return ma.masked_less(data, 0.001)
 
 
     else:
-        print '*** ERROR in unfold_lightning (lightning.py)'
-        print '    unknown form ', form
+        print('*** ERROR in unfold_lightning (lightning.py)')
+        print('    unknown form ', form)
 

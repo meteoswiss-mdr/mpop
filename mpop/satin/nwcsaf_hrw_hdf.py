@@ -1,3 +1,6 @@
+from __future__ import division
+from __future__ import print_function
+
 """Loader for MSG, nwcsaf high resolution hdf5 format.
 """
 from ConfigParser import ConfigParser
@@ -20,7 +23,7 @@ from copy import deepcopy
 try:
     import h5py
 except ImportError:
-    print "... module h5py needs to be installed"
+    print("... module h5py needs to be installed")
     quit()
 
 from mipp.xrit.MSG import _Calibrator
@@ -123,7 +126,7 @@ class HRW_class:
         HRW_new = deepcopy(self)
 
         for key_filter in ['min_correlation', 'min_conf_nwp', 'min_conf_no_nwp', 'cloud_type', 'level']:
-            if key_filter in kwargs.keys():
+            if key_filter in list(kwargs.keys()):
                 
                 # if argument given is None or all keyword than skip this filter 
                 if kwargs[key_filter] == None or kwargs[key_filter] == 'all' or kwargs[key_filter] == 'ALL' or kwargs[key_filter] == 'A':
@@ -149,7 +152,7 @@ class HRW_class:
                         inds = np_where(68000 < HRW_new.pressure)
 
                 HRW_new.subset(inds)
-                print "    filter for "+key_filter+" = ", kwargs[key_filter],' ('+n1+'->'+str(HRW_new.channel.size)+')'
+                print("    filter for "+key_filter+" = ", kwargs[key_filter],' ('+n1+'->'+str(HRW_new.channel.size)+')')
 
         return HRW_new
 
@@ -203,7 +206,7 @@ def load(satscene, calibrate=True, area_extent=None, read_basic_or_detailed='bot
     }
 
     LOG.info("assume seviri-level5")
-    print "... assume seviri-level5"
+    print("... assume seviri-level5")
 
     satscene.add_to_history("hdf5 data read by mpop/nwcsaf_hrw_hdf.py")
 
@@ -223,16 +226,16 @@ def load(satscene, calibrate=True, area_extent=None, read_basic_or_detailed='bot
     HRW_detailed.detailed = True
     HRW_detailed.date     = satscene.time_slot
 
-    print "... search for file: ", filename
+    print("... search for file: ", filename)
     filenames=glob(str(filename))
 
     if len(filenames) != 0:
 
         if len(filenames) > 1:
-            print "*** Warning, more than 1 datafile found: ", filenames 
+            print("*** Warning, more than 1 datafile found: ", filenames) 
 
         filename = filenames[0]
-        print("... read data from %s" % str(filename))
+        print(("... read data from %s" % str(filename)))
 
         # create an instant of the HRW_class
         m_per_s_to_knots = 1.944
@@ -250,19 +253,19 @@ def load(satscene, calibrate=True, area_extent=None, read_basic_or_detailed='bot
             #print hf.attrs.values()
 
             region_name = hf.attrs['REGION_NAME'].replace("_", "")
-            print "... read HRW data for region ", region_name
+            print("... read HRW data for region ", region_name)
             LOG.info("... read HRW data for region "+region_name)
             sat_ID = GP_IDs[int(hf.attrs["GP_SC_ID"])]
-            print "... derived from Meteosat ", sat_ID
+            print("... derived from Meteosat ", sat_ID)
             LOG.info("... derived from Meteosat "+sat_ID)
 
             # print('List of arrays in this file: \n', hf.keys()), len(hf.keys())
 
-            if len(hf.keys()) == 0:
-                print "*** Warning, empty file ", filename
-                print ""
+            if len(list(hf.keys())) == 0:
+                print("*** Warning, empty file ", filename)
+                print("")
             else:
-                for key in hf.keys():
+                for key in list(hf.keys()):
 
                     if key[4:9] == "BASIC":
                         if 'read_basic_or_detailed' in locals():
@@ -280,8 +283,8 @@ def load(satscene, calibrate=True, area_extent=None, read_basic_or_detailed='bot
                     if 'hrw_channels' in locals():
                         if hrw_channels != None:
                             if hrw_chn not in hrw_channels:
-                                print "... "+hrw_chn+" is not in hrw_channels", hrw_channels 
-                                print "    skip reading this channel" 
+                                print("... "+hrw_chn+" is not in hrw_channels", hrw_channels) 
+                                print("    skip reading this channel") 
                                 continue 
 
                     # read all  data 
@@ -333,8 +336,8 @@ def load(satscene, calibrate=True, area_extent=None, read_basic_or_detailed='bot
                 #[e for (wid,pwid) in sorted(zip(HRW_data.wind_id,HRW_data.prev_wind_id))]
 
     else:
-        print "*** Error, no file found"
-        print ""
+        print("*** Error, no file found")
+        print("")
         return -1
         sat_ID = "no file"
         # but we continue the program in order to add an empty channel below 

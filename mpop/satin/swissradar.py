@@ -1,3 +1,6 @@
+from __future__ import division
+from __future__ import print_function
+
 from PIL import Image
 #import Image
 import logging
@@ -37,18 +40,18 @@ def load(satscene, *args, **kwargs):
 
     for chn_name in satscene.channels_to_load:
 
-        for i in xrange(9):
+        for i in range(9):
             radar_product='radar-{0:1d}'.format(i+1)
             prod_name = conf.get(radar_product, "name")
             if prod_name.replace("'", "").replace('"', '') == chn_name.replace("'", "").replace('"', ''):
                 values["product"]=conf.get(radar_product, "product_name").replace("'", "").replace('"', '')
                 if verbose:
-                    print "... radar product to read:", chn_name, ' (', values["product"], ')'
+                    print("... radar product to read:", chn_name, ' (', values["product"], ')')
                 scale = conf.get(radar_product, "scale")
                 if verbose:
-                    print '... read scale from: ', scale
+                    print('... read scale from: ', scale)
                 units = conf.get(radar_product, "units").replace("'", "").replace('"', '')
-                print chn_name, units
+                print(chn_name, units)
                 break
 
         filename = os.path.join(
@@ -62,8 +65,8 @@ def load(satscene, *args, **kwargs):
         # RZC143081530F2.801.gif
 
         if filename[:10]=="meteoswiss" and values["product"] != "RZC":
-            print "*** ERROR in load (swissradar.py)"
-            print "  for near real time only the product precip (RZC) is implemented"
+            print("*** ERROR in load (swissradar.py)")
+            print("  for near real time only the product precip (RZC) is implemented")
             quit()
 
         # determine the format, read data accordingly 
@@ -74,20 +77,20 @@ def load(satscene, *args, **kwargs):
         if values["product"] == 'EZC':
             #chn_name='EchoTOP15'
             top=chn_name.replace("'", "").replace('"', '')[-2:]
-            print "ECHOTOP", top
+            print("ECHOTOP", top)
             #%(product)s%y%j%H%M??.???*
             if extension=='.gif':
                 filename=filename[:-3]+top+filename[-1:]
             else:
                 filename=filename[:-3]+top+filename[-1:]
 
-        print "... search for file: ", filename
+        print("... search for file: ", filename)
         filenames=glob.glob(str(filename))
         if len(filenames) == 0:
-            print "*** Error, no file found"
+            print("*** Error, no file found")
             quit()
         elif len(filenames) > 1:
-            print "*** Warning, more than 1 datafile found: ", filenames
+            print("*** Warning, more than 1 datafile found: ", filenames)
             ## for echotop select the correct file
             #if values["product"] == 'EZC':
             #    print "*** TO BE IMPLEMENTED: Choose correct file for EchoTOP", filenames                 
@@ -95,7 +98,7 @@ def load(satscene, *args, **kwargs):
             #    print "*** Warning, more than 1 datafile found: ", filenames 
         filename = filenames[0]
 
-        print("... read data from %s" % str(filename))								 
+        print(("... read data from %s" % str(filename)))								 
         
         if extension=='.gif':
             im = Image.open(str(filename))
@@ -109,7 +112,7 @@ def load(satscene, *args, **kwargs):
             #imo = Image.fromarray(radar_data.clip(0,255).astype("uint8"))
             #imo.save('test.png')
 
-            print 'gif-reader: swissradar.py (min/max):', radar_data.min(), radar_data.max()
+            print('gif-reader: swissradar.py (min/max):', radar_data.min(), radar_data.max())
 
             radar_data_masked = np.ma.asarray(radar_data)
             # RZC
@@ -121,7 +124,7 @@ def load(satscene, *args, **kwargs):
         else:
             import sys
             sys.path.insert(0, '/opt/users/hau/PyTroll/packages/mpop/mpop/satin/metranet')
-            import metranet
+            from . import metranet
             ret = metranet.read_file(str(filename), physic_value=True)
             #print dir(ret)
             ## ['__doc__', '__init__', '__module__', 'data', 'header', 'moment', 'pol_header', 'scale', 'type']
@@ -137,7 +140,7 @@ def load(satscene, *args, **kwargs):
             ## u'rect_xres': u'1.000000', u'table_name': u'8bit_metranet_vil_0.5res', u'time': u'1815016000'}
             #print type(ret.data)
             ##<type 'numpy.ndarray'>
-            print 'metranet B: swissradar.py (min/max):', np.nanmin(ret.data), np.nanmax(ret.data)
+            print('metranet B: swissradar.py (min/max):', np.nanmin(ret.data), np.nanmax(ret.data))
             
             from numpy.ma import masked_invalid, masked_where
             radar_data_masked=masked_invalid(ret.data)
@@ -146,7 +149,7 @@ def load(satscene, *args, **kwargs):
             radar_data_masked=masked_where(radar_data_masked==9999.0,radar_data_masked)
             ##radar_data_masked=masked_where(radar_data_masked<0.05, radar_data_masked)
             radar_data_masked.mask = (radar_data_masked >= 9999.0) | (radar_data_masked <= 0.5)
-            print type(radar_data_masked)
+            print(type(radar_data_masked))
     
         #print 'swissradar.py (min/max):', radar_data_masked.min(), radar_data_masked.max()
 
@@ -175,7 +178,7 @@ def convertToValue(im, scale):
     colorscale = np.loadtxt(scale, skiprows=1)
     #print "Colorscale: "
     #print colorscale
-    translate = dict(zip(zip(colorscale[:, 1], colorscale[:,2], colorscale[:,3]), colorscale[:,-1]))
+    translate = dict(list(zip(list(zip(colorscale[:, 1], colorscale[:,2], colorscale[:,3])), colorscale[:,-1])))
 
     #translate.get(rgb_im.getdata()[100], 500)  # 500 is the null value, in case the value is not found in the dictionary
     rain = np.zeros(len(rgb_im.getdata()))

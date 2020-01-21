@@ -1,3 +1,6 @@
+from __future__ import division
+from __future__ import print_function
+
 import glob
 import os
 from ConfigParser import ConfigParser
@@ -40,7 +43,7 @@ def load_odyssey_composite(filename):
    
    if len(filenames) == 0:
       LOG.debug("no input file found: "+filename)
-      print "no input file found:"+filename
+      print("no input file found:"+filename)
       quit()
    else:
       filename = glob.glob(str(filename))[0]

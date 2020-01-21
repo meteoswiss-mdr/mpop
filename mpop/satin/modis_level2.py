@@ -1,3 +1,6 @@
+from __future__ import division
+from __future__ import print_function
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2011, 2013, 2014.
@@ -138,7 +141,7 @@ class ModisEosHdfLevel2(mpop.channel.GenericChannel):
         # Get all the Attributes:
         # Common Attributes, Data Time,
         # Data Structure and Scene Coordinates
-        for key in root.attributes().keys():
+        for key in list(root.attributes().keys()):
             self._eoshdf_info[key] = root.attributes()[key]
 
         # Start Time - datetime object
@@ -280,7 +283,7 @@ def load(satscene, **kwargs):
         # Common Attributes, Data Time,
         # Data Structure and Scene Coordinates
         info = {}
-        for key in eoshdf.attributes().keys():
+        for key in list(eoshdf.attributes().keys()):
             info[key] = eoshdf.attributes()[key]
 
         dsets = eoshdf.datasets()

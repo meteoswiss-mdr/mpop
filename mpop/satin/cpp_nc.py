@@ -1,3 +1,6 @@
+from __future__ import division
+from __future__ import print_function
+
 """Loader for MSG, netcdf format.
 """
 from ConfigParser import ConfigParser
@@ -25,21 +28,21 @@ def load(satscene, **kargs):
 
     time_slot2 = satscene.time_slot + timedelta(minutes=15)
     enddate = time_slot2.strftime("%Y%m%dT%H%M00")
-    print enddate
+    print(enddate)
     values["enddate"] = enddate
 
     filename = os.path.join( satscene.time_slot.strftime(conf.get("seviri-level2", "dir", raw=True)),
                              satscene.time_slot.strftime(conf.get("seviri-level2", "filename", raw=True)) % values )
 
-    print "... search for file: ", filename
+    print("... search for file: ", filename)
     filenames=glob(str(filename))
     if len(filenames) == 0:
-        print "*** Error, no file found"
+        print("*** Error, no file found")
         quit()
     elif len(filenames) > 1:
-        print "*** Warning, more than 1 datafile found: ", filenames 
+        print("*** Warning, more than 1 datafile found: ", filenames) 
     filename = filenames[0]
-    print("... read data from %s" % str(filename))
+    print(("... read data from %s" % str(filename)))
 
     # Load data from netCDF file
     ds = Dataset(filename, 'r')
@@ -70,7 +73,7 @@ def load(satscene, **kargs):
             units = ds.variables[chn_name].getncattr("units")
             if units=="1":
                 units=None
-            print "... units ", units
+            print("... units ", units)
         except AttributeError:
             units=None
 
@@ -100,7 +103,7 @@ def load(satscene, **kargs):
         #print '(B min/max) ',data.min(),data.max()
 
         satscene[chn_name] = ma.asarray(data)
-        print "*** *** units ", units
+        print("*** *** units ", units)
         if units != None:
             satscene[chn_name].info['units'] = units
         # !!! BAD: THIS INFORMATION SHOULD BE SAVED IN THE FILE !!!

@@ -1,3 +1,6 @@
+from __future__ import division
+from __future__ import print_function
+
 """Loader for MSG, netcdf format.
 """
 from ConfigParser import ConfigParser
@@ -54,7 +57,7 @@ def load(satscene, **kwargs):
     if "forecast_time" in kwargs:
         key = "forecast_time"
         forecast_time = kwargs[key]
-        print "... %s: %s" % (key, kwargs[key])
+        print("... %s: %s" % (key, kwargs[key]))
     else:
         forecast_time = [0]
 
@@ -62,7 +65,7 @@ def load(satscene, **kwargs):
     if "pressure_levels" in kwargs:
         key = "pressure_levels"
         pressure_levels = array(kwargs[key])
-        print "... %s: %s" % (key, kwargs[key])
+        print("... %s: %s" % (key, kwargs[key]))
     else:
         pressure_levels=[]
         
@@ -79,10 +82,10 @@ def load(satscene, **kwargs):
 
     # convert from hPa to Pa
     if len(pressure_levels)==0:
-        print "ERROR, no pressure levels specified when reading COSMO wind"
+        print("ERROR, no pressure levels specified when reading COSMO wind")
         quit()
     else:
-        print "read ", pressure_levels
+        print("read ", pressure_levels)
 
     pressure_levels = array(pressure_levels)
     pressure_levels *= 100
@@ -98,41 +101,41 @@ def load(satscene, **kwargs):
     # get COSMO model start time
     hour_run = satscene.time_slot.hour //3 * 3 
     t_run = datetime(satscene.time_slot.year, satscene.time_slot.month, satscene.time_slot.day, hour_run, 0)
-    print "COSMO model start", str(t_run)
+    print("COSMO model start", str(t_run))
     
     dt = satscene.time_slot - t_run
     hour_forecast1 = "%02d" % int (dt.total_seconds() / 3600) # using integer devision 
     hour_forecast2 = "%02d" % int (dt.total_seconds() / 3600 +1)  # using integer devision 
 
-    print "hour_forecast1, hour_forecast2", hour_forecast1, hour_forecast2
+    print("hour_forecast1, hour_forecast2", hour_forecast1, hour_forecast2)
 
     t0 = satscene.time_slot
-    print "time to show:", t0
+    print("time to show:", t0)
     ftime = int(satscene.time_slot.strftime("%H")) % 3
     model_starthour = int(satscene.time_slot.strftime("%H")) - ftime
     model_starttime = datetime(t0.year, t0.month, t0.day, model_starthour, 0, 0) 
-    print "available calc time (until now): ", datetime.now()-model_starttime
+    print("available calc time (until now): ", datetime.now()-model_starttime)
     # check if COSMO model already produced output, if not take run from 3 hours before
     if datetime.now()-model_starttime < timedelta(minutes=80):
-        print "... COSMO results from model start ",model_starttime ," not yet ready,. take run three hours before"
+        print("... COSMO results from model start ",model_starttime ," not yet ready,. take run three hours before")
         model_starttime -= timedelta(minutes=180)
         ftime += 3
-    print model_starttime
+    print(model_starttime)
     forecast_time = [ftime]
     
     for ftime in forecast_time:
 
         ftime_str = "%02d" % ftime # in hours
         values["forecast_time"] = ftime_str
-        print '... forecast time: '+ftime_str
+        print('... forecast time: '+ftime_str)
 
         filename = os.path.join( model_starttime.strftime(conf.get("cosmo-level3", "dir", raw=True)),
                                  model_starttime.strftime(conf.get("cosmo-level3", "filename", raw=True)) % values )
 
-        print "... search for file: ", filename
+        print("... search for file: ", filename)
         filenames=glob(str(filename))
         if len(filenames) == 0:
-            print "*** Error, no file found"
+            print("*** Error, no file found")
             quit()
         elif len(filenames) == 1:
             filename = filenames[0]
@@ -143,21 +146,21 @@ def load(satscene, **kwargs):
                 #infile = filenames[fileformats.index('bz2')]
                 call("cp "+ filename+" /tmp 2>&1", shell=True)
                 tmpfile = '/tmp/'+basename(filename)
-                print "... bunzip2 "+tmpfile
+                print("... bunzip2 "+tmpfile)
                 call("/bin/bunzip2 "+ tmpfile+" 2>&1", shell=True)
-                print "... remove "+tmpfile
+                print("... remove "+tmpfile)
                 call("rm "+ tmpfile+" 2>&1", shell=True)
                 filename = tmpfile[:-4]
                 copy_file=True
         elif len(filenames) > 1:
-            print "*** Warning, more than 1 datafile found: ", filenames
+            print("*** Warning, more than 1 datafile found: ", filenames)
             for this_file in filenames:
                 if this_file.split(".")[-1] == 'nc':
                     filename=this_file
-                    print "*** Choose first nc file: ", filename
+                    print("*** Choose first nc file: ", filename)
                     break
         
-        print("... read data from %s" % str(filename))
+        print(("... read data from %s" % str(filename)))
         
         # Load data from netCDF file
         ds = Dataset(filename, 'r')
@@ -178,7 +181,7 @@ def load(satscene, **kwargs):
 
         #print x_1[:], len(x_1)
         #print y_1[:], len(y_1)
-        print z_1[:]
+        print(z_1[:])
 
         if hasattr(satscene, 'forecast_time'):
             satscene.forecast_time = append(satscene.forecast_time, ftime)
@@ -189,7 +192,7 @@ def load(satscene, **kwargs):
         # Load specified data sets from netCDF file
         for chn_name in var_to_load:
 
-            print "... read:", chn_name
+            print("... read:", chn_name)
             
             # Read variable corresponding to channel name
             data = ds.variables[chn_name][:,:,:,:] # use slicing to convert netCDF4 class to masked array         
@@ -204,8 +207,8 @@ def load(satscene, **kwargs):
             #print "... FillValue ", FillValue
             data = ma.masked_equal( data, FillValue )
 
-            print '... '+long_name+".min()/max(): ",data.min(),data.max()
-            print '... '+long_name+".shape: ",   data.shape
+            print('... '+long_name+".min()/max(): ",data.min(),data.max())
+            print('... '+long_name+".shape: ",   data.shape)
 
             units = ds.variables[chn_name].getncattr("units")
             if units=="1":
@@ -226,18 +229,18 @@ def load(satscene, **kwargs):
 
             for p_level in pressure_levels:
 
-                print '... read wind for pressure level:', p_level
+                print('... read wind for pressure level:', p_level)
 
                 if p_level in z_1:
                     z_index = where(z_1[:]==p_level)
                 else:
-                    print "*** ERROR while reading COSMO wind"
-                    print "    unknown pressure level", p_level
+                    print("*** ERROR while reading COSMO wind")
+                    print("    unknown pressure level", p_level)
                     quit()
 
                 p_str= '%d' % (p_level/100)
                 p_str = p_str.strip() +'hPa'
-                print p_str
+                print(p_str)
                 var_name=chn_name+'-'+p_str
                 #var_name=chn_name
                 
@@ -260,10 +263,10 @@ def load(satscene, **kwargs):
                     satscene[var_name].info['units'] = units
 
                 if satscene.x_1_long_name != "x-coordinate in Swiss coordinate system" :
-                    print "*** Error in mpop/satin/cosmo2_wind_nc.py"
-                    print "    currently reading is only implemented for"
-                    print "    data in the Swiss coordinate system"
-                    print "    x_1 (long name): ", x_1_long_name
+                    print("*** Error in mpop/satin/cosmo2_wind_nc.py")
+                    print("    currently reading is only implemented for")
+                    print("    data in the Swiss coordinate system")
+                    print("    x_1 (long name): ", x_1_long_name)
                     quit()
 
                 # !!! BAD: THIS INFORMATION SHOULD BE SAVED IN THE FILE !!!
@@ -272,6 +275,6 @@ def load(satscene, **kwargs):
                 elif len(x_1)==710 and len(y_1)==640:
                     satscene[var_name].area = get_area_def("ccs4")
                 else:
-                    print "*** ERROR"
-                    print "unknown area of COSMO input"
+                    print("*** ERROR")
+                    print("unknown area of COSMO input")
                     quit()

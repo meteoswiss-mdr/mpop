@@ -1,3 +1,6 @@
+from __future__ import division
+from __future__ import print_function
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -225,11 +228,11 @@ class OsisafNarSstProduct(mpop.channel.GenericChannel):
         try:
             retv["longt_name"] = datasetObj.long_name
         except AttributeError:
-            print "WARNING: No attribute 'long_name'"
+            print("WARNING: No attribute 'long_name'")
         try:
             retv["standard_name"] = datasetObj.standard_name
         except AttributeError:
-            print "WARNING: No attribute 'standard_name'"
+            print("WARNING: No attribute 'standard_name'")
         try:
             retv["comment"] = datasetObj.comment
         except AttributeError:

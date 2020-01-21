@@ -1,3 +1,6 @@
+from __future__ import division
+from __future__ import print_function
+
 """Loader for MSG, netcdf format.
 """
 from ConfigParser import ConfigParser
@@ -13,7 +16,7 @@ import datetime
 try:
     import h5py
 except ImportError:
-    print "... module h5py needs to be installed"
+    print("... module h5py needs to be installed")
     quit()
 
 from mipp.xrit.MSG import _Calibrator
@@ -53,7 +56,7 @@ def load(satscene, calibrate=True, area_extent=None, **kwargs):
 
     # Read config file content
     conf = ConfigParser()
-    print "    read config file: ", os.path.join(CONFIG_PATH, satscene.fullname + ".cfg")
+    print("    read config file: ", os.path.join(CONFIG_PATH, satscene.fullname + ".cfg"))
     conf.read(os.path.join(CONFIG_PATH, satscene.fullname + ".cfg"))
     values = {"orbit": satscene.orbit,
     "satname": satscene.satname,
@@ -63,17 +66,17 @@ def load(satscene, calibrate=True, area_extent=None, **kwargs):
     }
 
     LOG.info("assume seviri-level4")
-    print "... assume seviri-level4"
+    print("... assume seviri-level4")
 
     satscene.add_to_history("hdf5 data read by mpop/msg_seviri_hdf.py")
 
 
-    if "reader_level" in kwargs.keys():
+    if "reader_level" in list(kwargs.keys()):
         reader_level = kwargs["reader_level"]
     else:
         reader_level = "seviri-level4"
 
-    if "RSS" in kwargs.keys():
+    if "RSS" in list(kwargs.keys()):
         if kwargs["RSS"]:
             dt_end =  4
         else:
@@ -82,8 +85,8 @@ def load(satscene, calibrate=True, area_extent=None, **kwargs):
         from my_msg_module import check_RSS
         RSS = check_RSS(satscene.sat_nr(), satscene.time_slot)
         if RSS == None:
-            print "*** Error in mpop/satin/msg_seviri_hdf.py"
-            print "    satellite MSG", satscene.sat_nr() ," is not active yet"
+            print("*** Error in mpop/satin/msg_seviri_hdf.py")
+            print("    satellite MSG", satscene.sat_nr() ," is not active yet")
             quit()
         else:
             if RSS:
@@ -91,8 +94,8 @@ def load(satscene, calibrate=True, area_extent=None, **kwargs):
             else:
                 dt_end = 12
 
-    print "... hdf file name is specified by observation end time"
-    print "    assume ", dt_end, " min between start and end time of observation"
+    print("... hdf file name is specified by observation end time")
+    print("    assume ", dt_end, " min between start and end time of observation")
 
     # end of scan time 4 min after start 
     end_time = satscene.time_slot + datetime.timedelta(minutes=dt_end)
@@ -100,15 +103,15 @@ def load(satscene, calibrate=True, area_extent=None, **kwargs):
     filename_pattern = os.path.join( end_time.strftime(conf.get(reader_level, "dir",      raw=True)),
                                      end_time.strftime(conf.get(reader_level, "filename", raw=True)) % values )
 
-    print "... search for file: ", filename_pattern
+    print("... search for file: ", filename_pattern)
     filenames=glob(str(filename_pattern))
 
     if len(filenames) == 0:
-        print "*** Error, no file found"
+        print("*** Error, no file found")
         return # just return without exit the program 
     elif len(filenames) >= 1:
         if len(filenames) > 1:
-            print "*** Warning, more than 1 datafile found: ", filenames 
+            print("*** Warning, more than 1 datafile found: ", filenames) 
         # possible formats: 
         # MSG2-SEVI-MSG15-0100-NA-20160528233414.576000000Z-20160528233432-1185626-3.h5
         # MSG2-SEVI-MSG15-0100-NA-20160528233414.576000000Z-20160528233432-1185626-3.h5.bz2
@@ -124,18 +127,18 @@ def load(satscene, calibrate=True, area_extent=None, **kwargs):
             infile = filenames[fileformats.index('bz2')]
             call("cp "+ infile+" /tmp 2>&1", shell=True)
             tmpfile = '/tmp/'+basename(infile)
-            print "... bunzip2 "+tmpfile
+            print("... bunzip2 "+tmpfile)
             call("/bin/bunzip2 "+ tmpfile+" 2>&1", shell=True)
-            print "... remove "+tmpfile
+            print("... remove "+tmpfile)
             call("rm "+ tmpfile+" 2>&1", shell=True)
             filename = tmpfile[:-4]
             copy_file=True
         else:
-            print "***ERROR, unknown file format"
-            print fileformats
+            print("***ERROR, unknown file format")
+            print(fileformats)
             quit()
 
-    print("... read data from %s" % str(filename))
+    print(("... read data from %s" % str(filename)))
 
     # read data from hdf5 file 
     data_folder='U-MARF/MSG/Level1.5/'
@@ -186,7 +189,7 @@ def load(satscene, calibrate=True, area_extent=None, **kwargs):
         if 1 == 0:
             # works only if all pixels are on the disk 
             from msg_pixcoord2area import msg_pixcoord2area
-            print "VIS_IRNorthLine, VIS_IRWestColumn, VIS_IRSouthLine, VIS_IREastColumn: ", VIS_IRNorthLine, VIS_IRWestColumn, VIS_IRSouthLine, VIS_IREastColumn
+            print("VIS_IRNorthLine, VIS_IRWestColumn, VIS_IRSouthLine, VIS_IREastColumn: ", VIS_IRNorthLine, VIS_IRWestColumn, VIS_IRSouthLine, VIS_IREastColumn)
             area_def = msg_pixcoord2area ( VIS_IRNorthLine, VIS_IRWestColumn, VIS_IRSouthLine, VIS_IREastColumn, "vis", sat_lon )
         else:
             # works also for pixels outside of the disk 
@@ -244,7 +247,7 @@ def load(satscene, calibrate=True, area_extent=None, **kwargs):
         Level15ImageCalibration = hf.get(data_folder+'METADATA/HEADER/RadiometricProcessing/Level15ImageCalibration_ARRAY')
         hdr["Level1_5ImageCalibration"] = dict()
 
-        for chn_name in channel_numbers.keys():
+        for chn_name in list(channel_numbers.keys()):
             chn_nb = channel_numbers[chn_name]-1
             hdr["Level1_5ImageCalibration"][chn_nb] = dict()
             #print chn_name, chn_nb, Level15ImageCalibration[chn_nb]['Cal_Slope'], Level15ImageCalibration[chn_nb]['Cal_Offset']
@@ -285,12 +288,12 @@ def load(satscene, calibrate=True, area_extent=None, **kwargs):
                 satscene[chn_name].info['is_calibrated'] = True
 
             else: 
-                print "*** Warning, no data for channel "+ chn_name+ " in file "+ filename
+                print("*** Warning, no data for channel "+ chn_name+ " in file "+ filename)
                 data = np_nan
                 calibration_unit = ""
                 LOG.info("*** Warning, no data for channel "+ chn_name+" in file "+filename)
                 # do not append the channel chn_name
 
     if copy_file:
-        print "... remove "+filename
+        print("... remove "+filename)
         call("rm "+filename+" 2>&1", shell=True) 

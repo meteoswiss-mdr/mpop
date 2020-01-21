@@ -1,3 +1,6 @@
+from __future__ import division
+from __future__ import print_function
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2010, 2012, 2014.
@@ -155,7 +158,7 @@ def print_bitstring(s__):
         ts_ = ts_ >> 1
 
     del i
-    print res
+    print(res)
 
 
 def read_grh(fdes):
@@ -807,7 +810,7 @@ def load_avhrr(satscene, options):
     if g3b:
         satscene["3B"] = channels[3, :, :]
 
-    print "Inside eps_avhrr.load_avhrr: orbit = ", orbit
+    print("Inside eps_avhrr.load_avhrr: orbit = ", orbit)
     #satscene.orbit = str(int(orbit) + 1)
     satscene.orbit = str(int(orbit))
 

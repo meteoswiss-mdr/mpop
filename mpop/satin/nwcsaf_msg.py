@@ -1,3 +1,6 @@
+from __future__ import division
+from __future__ import print_function
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2010, 2012, 2014.
@@ -51,7 +54,7 @@ COMPRESS_LVL = 6
 
 
 def pcs_def_from_region(region):
-    items = region.proj_dict.items()
+    items = list(region.proj_dict.items())
     return ' '.join([str(t[0]) + '=' + str(t[1]) for t in items])
 
 
@@ -73,7 +76,7 @@ def _get_area_extent(cfac, lfac, coff, loff, numcols, numlines):
     yur = np.deg2rad(yur) * 35785831.0
     yres = (yur - yll) / numlines
     yll, yur = yll + yres / 2, yur - yres / 2
-    print "msg_hdf _get_area_extent: xll, yll, xur, yur = ", xll, yll, xur, yur
+    print("msg_hdf _get_area_extent: xll, yll, xur, yur = ", xll, yll, xur, yur)
     return xll, yll, xur, yur
 
 
@@ -83,7 +86,7 @@ def get_area_extent(filename):
     import h5py
     h5f = h5py.File(filename, 'r')
     #print filename
-    print "msg_hdf get_area_extent: CFAC, LFAC, COFF, LOFF, NC, NL = ", h5f.attrs["CFAC"], h5f.attrs["LFAC"], h5f.attrs["COFF"], h5f.attrs["LOFF"], h5f.attrs["NC"], h5f.attrs["NL"]
+    print("msg_hdf get_area_extent: CFAC, LFAC, COFF, LOFF, NC, NL = ", h5f.attrs["CFAC"], h5f.attrs["LFAC"], h5f.attrs["COFF"], h5f.attrs["LOFF"], h5f.attrs["NC"], h5f.attrs["NL"])
     aex = _get_area_extent(h5f.attrs["CFAC"],
                            h5f.attrs["LFAC"],
                            h5f.attrs["COFF"],
@@ -208,7 +211,7 @@ class MsgCloudMask(mpop.channel.GenericChannel):
         # ------------------------
 
         # The cloud mask data
-        print "... read cloud mask data"
+        print("... read cloud mask data")
         h5d = h5f['CMa']
         self.CMa.data = h5d[:, :]
         self.CMa.scaling_factor = h5d.attrs["SCALING_FACTOR"]
@@ -223,7 +226,7 @@ class MsgCloudMask(mpop.channel.GenericChannel):
         # ------------------------
 
         # The cloud mask dust data
-        print "... read cloud mask dust data"
+        print("... read cloud mask dust data")
         h5d = h5f['CMa_DUST']
         self.CMa_DUST.data = h5d[:, :]
         self.CMa_DUST.scaling_factor = h5d.attrs["SCALING_FACTOR"]
@@ -236,7 +239,7 @@ class MsgCloudMask(mpop.channel.GenericChannel):
         # ------------------------
 
         # The cloud mask quality
-        print "... read cloud mask quality"
+        print("... read cloud mask quality")
         h5d = h5f['CMa_QUALITY']
         self.CMa_QUALITY.data = h5d[:, :]
         self.CMa_QUALITY.scaling_factor = h5d.attrs["SCALING_FACTOR"]
@@ -249,7 +252,7 @@ class MsgCloudMask(mpop.channel.GenericChannel):
         # ------------------------
 
         h5d = h5f['CMa_VOLCANIC']
-        print "... read volcanic dust mask"
+        print("... read volcanic dust mask")
         self.CMa_VOLCANIC.data = h5d[:, :]
         self.CMa_VOLCANIC.scaling_factor = h5d.attrs["SCALING_FACTOR"]
         self.CMa_VOLCANIC.offset = h5d.attrs["OFFSET"]
@@ -493,8 +496,8 @@ class MsgNwcsafClass(mpop.channel.GenericChannel):
             self.crph_dataflag = None
             self.processing_flags = None
         else:
-            print "*** ERROR in MsgNWCSAF (nwcsaf_msg.py)"
-            print "    unknown NWCSAF product: ", product
+            print("*** ERROR in MsgNWCSAF (nwcsaf_msg.py)")
+            print("    unknown NWCSAF product: ", product)
             quit() 
 
         self.shape = None
@@ -526,8 +529,8 @@ class MsgNwcsafClass(mpop.channel.GenericChannel):
         elif self.name == "SPhR":
             self.var_names = ('SPhR_BL','SPhR_CAPE','SPhR_HL','SPhR_KI','SPhR_LI','SPhR_ML','SPhR_QUALITY','SPhR_SHW','SPhR_TPW')  
         else:
-            print "*** ERROR in MsgNWCSAF read (nwcsaf_msg.py)"
-            print "    unknown NWCSAF product: ", product
+            print("*** ERROR in MsgNWCSAF read (nwcsaf_msg.py)")
+            print("    unknown NWCSAF product: ", product)
             quit()
             
         h5f = h5py.File(filename, 'r')
@@ -555,7 +558,7 @@ class MsgNwcsafClass(mpop.channel.GenericChannel):
         # ------------------------
 
         for var_name in self.var_names:
-            print "... read hdf5 variable ", var_name
+            print("... read hdf5 variable ", var_name)
             h5d = h5f[var_name]
             var1=MsgNwcsafData()
             var1.data = h5d[:, :]
@@ -570,7 +573,7 @@ class MsgNwcsafClass(mpop.channel.GenericChannel):
 
             # copy temporal var1 to self.var_name
             if calibrate:
-                print "... apply scaling_factor", var1.scaling_factor, " and offset ", var1.offset 
+                print("... apply scaling_factor", var1.scaling_factor, " and offset ", var1.offset) 
                 setattr(self, var_name,  var1.data*var1.scaling_factor
                                         +var1.offset )
             else:
@@ -693,7 +696,7 @@ class MsgNwcsafClass(mpop.channel.GenericChannel):
             elif var_name=="CTTH_QUALITY" or var_name=="processingflag":
                 retv.processingflag = ctth_procflags2pps(self.processing_flags)
             elif var_name=="CMa_QUALITY" or var_name=="QUALITY":
-                print "*** WARNING, no conversion for CMA and SPhR products flags yet!"
+                print("*** WARNING, no conversion for CMA and SPhR products flags yet!")
         # !!! UH: THIS PART IS TO BE DONE BY SOMEBODY WHO USES PPS !!!
 
         return retv
@@ -2173,7 +2176,7 @@ class MsgSPhR(mpop.channel.GenericChannel):
             self.sphr_tpw = mask * (self.sphr_tpw.data *
                                     self.sphr_tpw.scaling_factor +
                                     self.sphr_tpw.offset)
-            print self.sphr_tpw.min(), self.sphr_tpw.max()
+            print(self.sphr_tpw.min(), self.sphr_tpw.max())
         else:
             self.sphr_tpw = self.sphr_tpw.data
 
@@ -2855,8 +2858,8 @@ def get_best_products(filename, area_extent):
 
     filenames = []
 
-    print "area_extent", area_extent
-    print "***********************!!!!!!!!!!!!!!!!!!!!!!!!"
+    print("area_extent", area_extent)
+    print("***********************!!!!!!!!!!!!!!!!!!!!!!!!")
 
     
     for ext in MSG_PGE_EXTENTIONS:
@@ -2930,7 +2933,7 @@ def load(scene, **kwargs):
     loaded.
     """
 
-    print "*** read NWC-SAF data with nwcsaf_msg.py", scene.channels_to_load
+    print("*** read NWC-SAF data with nwcsaf_msg.py", scene.channels_to_load)
 
     area_extent = kwargs.get("area_extent")
     calibrate = kwargs.get("calibrate", True)
@@ -2949,9 +2952,9 @@ def load(scene, **kwargs):
                        "product": "CMa__"})
         filename = get_best_product(filename_wildcards, area_extent)
         if filename != None:
-            print "    read data from: ", filename
+            print("    read data from: ", filename)
         else:
-            print "*** Warning, no input file for NWCSAF CloudMask found:", filename_wildcards 
+            print("*** Warning, no input file for NWCSAF CloudMask found:", filename_wildcards) 
         if filename != None:
             ct_chan = MsgCloudMask() 
             ct_chan.read(filename,calibrate)
@@ -2970,7 +2973,7 @@ def load(scene, **kwargs):
         else:
             LOG.info("Did not find any MSG file for specified area")
             return
-        print "    read data from: ", filename
+        print("    read data from: ", filename)
         ct_chan = MsgCloudType()
         ct_chan.read(filenames[-1])
         LOG.debug("Uncorrected file: %s", filename)
@@ -2990,7 +2993,7 @@ def load(scene, **kwargs):
         else:
             LOG.info("Did not find any MSG file for specified area")
             return
-        print "    read data from: ", filename
+        print("    read data from: ", filename)
         ct_chan_plax = MsgCloudType()
         if filename != None:
             LOG.debug("Parallax corrected file: %s", filename)
@@ -3006,7 +3009,7 @@ def load(scene, **kwargs):
                     % {"number": "03",
                        "product": "CTTH_"})
         filename = get_best_product(filename_wildcards, area_extent)
-        print "    read data from: ", filename
+        print("    read data from: ", filename)
         if filename != None:
             ct_chan = MsgCTTH()
             ct_chan.read(filename,calibrate)
@@ -3020,7 +3023,7 @@ def load(scene, **kwargs):
                     % {"number": "05",
                        "product": "CRR__"})
         filename = get_best_product(filename_wildcards, area_extent)
-        print "    read data from: ", filename
+        print("    read data from: ", filename)
         if filename != None:
             ct_chan = MsgCRR()
             ct_chan.read(filename,calibrate)
@@ -3035,7 +3038,7 @@ def load(scene, **kwargs):
                     % {"number": "04",
                        "product": "PC___"})
         filename = get_best_product(filename_wildcards, area_extent)
-        print "    read data from: ", filename
+        print("    read data from: ", filename)
         if filename != None:
             ct_chan = MsgPC()
             ct_chan.read(filename,calibrate)
@@ -3050,7 +3053,7 @@ def load(scene, **kwargs):
                     % {"number": "13",
                        "product": "SPhR_"})
         filename = get_best_product(filename_wildcards, area_extent)
-        print "    read data from: ", filename
+        print("    read data from: ", filename)
         if filename != None:
             ct_chan = MsgSPhR()
             ct_chan.read(filename,calibrate)
@@ -3065,7 +3068,7 @@ def load(scene, **kwargs):
                     % {"number": "14",
                        "product": "PCPh_"})
         filename = get_best_product(filename_wildcards, area_extent)
-        print "    read data from: ", filename
+        print("    read data from: ", filename)
         if filename != None:
             ct_chan = MsgPCPh()
             ct_chan.read(filename,calibrate)
@@ -3080,7 +3083,7 @@ def load(scene, **kwargs):
                     % {"number": "14",
                        "product": "CRPh_"})
         filename = get_best_product(filename_wildcards, area_extent)
-        print "    read data from: ", filename
+        print("    read data from: ", filename)
         if filename != None:
             ct_chan = MsgCRPh()
             ct_chan.read(filename,calibrate)
@@ -3094,7 +3097,7 @@ def load(scene, **kwargs):
         if len(filename) > 12:
             sat_nr = int(basename(filename)[10:11])+7
             if int(scene.sat_nr()) != int(sat_nr):
-                print "*** Warning, change Meteosat number to ", str(sat_nr), " (input: ",str(scene.sat_nr()),")"
+                print("*** Warning, change Meteosat number to ", str(sat_nr), " (input: ",str(scene.sat_nr()),")")
                 if scene.number != "":
                     #scene.number = str(sat_nr).zfill(2)
                     # !!! update number !!!

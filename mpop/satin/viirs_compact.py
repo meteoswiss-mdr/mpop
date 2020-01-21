@@ -1,3 +1,6 @@
+from __future__ import division
+from __future__ import print_function
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -129,7 +132,7 @@ def load(satscene, *args, **kwargs):
                     for chn in satscene.channels_to_load
                     if chn in chan_dict]
         try:
-            channels_to_load, chans = zip(*channels)
+            channels_to_load, chans = list(zip(*channels))
         except ValueError:
             return
 
@@ -228,7 +231,7 @@ def load(satscene, *args, **kwargs):
 def read_m(h5f, channels, calibrate=1):
 
     chan_dict = dict([(key.split("-")[1], key)
-                      for key in h5f["All_Data"].keys()
+                      for key in list(h5f["All_Data"].keys())
                       if key.startswith("VIIRS")])
 
     scans = h5f["All_Data"]["NumberOfScans"][0]
@@ -253,7 +256,7 @@ def read_m(h5f, channels, calibrate=1):
                               rads.attrs['RadianceOffsetHigh'],)
             arr_mask = arr.mask
         except KeyError:
-            print "KeyError"
+            print("KeyError")
             pass
         unit = "W m-2 sr-1 μm-1"
         if calibrate == 0:
@@ -403,7 +406,7 @@ def navigate_m(h5f, channel):
                        expand_array(lat, scans, c_align, c_exp, scan_size,
                                     tpz_size, nties, track_offset,
                                     scan_offset)))
-    lons, lats = zip(*res)
+    lons, lats = list(zip(*res))
     return np.hstack(lons), np.hstack(lats)
 
 
@@ -464,7 +467,7 @@ def navigate_dnb(h5f):
                        expand_array(lat, scans, c_align, c_exp, scan_size,
                                     tpz_size, nties, track_offset,
                                     scan_offset)))
-    lons, lats = zip(*res)
+    lons, lats = list(zip(*res))
     return np.hstack(lons), np.hstack(lats)
 
 

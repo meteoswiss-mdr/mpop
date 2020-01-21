@@ -1,3 +1,6 @@
+from __future__ import division
+from __future__ import print_function
+
 """Loader for MSG, netcdf format.
 """
 from ConfigParser import ConfigParser
@@ -44,18 +47,18 @@ def load(satscene, **kargs):
     filename = os.path.join( satscene.time_slot.strftime(conf.get("seviri-level6", "dir", raw=True)),
                              satscene.time_slot.strftime(conf.get("seviri-level6", "filename", raw=True)) % values )
 
-    print "... search for file: ", filename
+    print("... search for file: ", filename)
     filenames=glob(str(filename))
     if len(filenames) == 0:
-        print "*** Error, no file found"
+        print("*** Error, no file found")
         quit()
     elif len(filenames) > 1:
-        print "*** Warning, more than 1 datafile found: ", filenames 
+        print("*** Warning, more than 1 datafile found: ", filenames) 
     filename = filenames[0]
-    print("... read data from %s" % str(filename))
+    print(("... read data from %s" % str(filename)))
 
     # Load data from netCDF file
-    print "    use netCDF reading package: ", reading_package
+    print("    use netCDF reading package: ", reading_package)
     if reading_package == "ScientificPython":
         ncfile = NetCDFFile(filename, 'r')
     elif reading_package == "scipy":
@@ -65,12 +68,12 @@ def load(satscene, **kargs):
     # !!! BAD: THIS INFORMATION SHOULD BE SAVED IN THE FILE !!!
     area = filename[filename.rfind("_")+1:filename.rfind(".")]
     area_def = get_area_def(area)
-    print "... set area to ", area 
+    print("... set area to ", area) 
     #satscene.area = area_def
         
     for chn_name in satscene.channels_to_load:
         # only read variables which are in the netCDF file
-        if chn_name in long_names.keys():
+        if chn_name in list(long_names.keys()):
         
             # Read variable corresponding to channel name
             data = ncfile.variables[chn_name][:]   # attention [:,:] or [:] is really necessary

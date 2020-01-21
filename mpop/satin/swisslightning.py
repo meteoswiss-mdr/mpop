@@ -1,3 +1,6 @@
+from __future__ import division
+from __future__ import print_function
+
 import logging
 import glob
 import os
@@ -28,7 +31,7 @@ def load(satscene, *args, **kwargs):
     # Read config file content
     conf = ConfigParser()
     conf.read(os.path.join(CONFIG_PATH, satscene.fullname + ".cfg"))
-    print "... read lightning config from ", os.path.join(CONFIG_PATH, satscene.fullname + ".cfg")
+    print("... read lightning config from ", os.path.join(CONFIG_PATH, satscene.fullname + ".cfg"))
 
     values = {"orbit": satscene.orbit,
               "satname": satscene.satname,
@@ -43,27 +46,27 @@ def load(satscene, *args, **kwargs):
     else:
         projectionName = conf.get("thx-level2", "projection")
         #projectionName = "ccs4"
-    print "... project lightning data to ", projectionName
+    print("... project lightning data to ", projectionName)
     #scale = conf.get("radar-1", "scale")
     #print '... read scale from: ', scale
 
     gmt = gmtime()
     now = datetime.datetime(gmt.tm_year, gmt.tm_mon, gmt.tm_mday, gmt.tm_hour, gmt.tm_min, 0) 
     dtime = now - satscene.time_slot
-    print "... desired time slot: "+ str(satscene.time_slot)+ ", current time: "+ str(now)
-    print "    time difference: "+ str(dtime)
+    print("... desired time slot: "+ str(satscene.time_slot)+ ", current time: "+ str(now))
+    print("    time difference: "+ str(dtime))
     NEAR_REAL_TIME = False
 
     archive_time = datetime.timedelta(days=5) # last 5 days are in the archive
     if dtime < archive_time:
-        print "    use the near real time data "
+        print("    use the near real time data ")
         NEAR_REAL_TIME=True
         filename = os.path.join(
             satscene.time_slot.strftime(conf.get("thx-level2", "nearrealtime_dir")),
             satscene.time_slot.strftime(conf.get("thx-level2", "nrt_filename", raw=True)) % values)
     else: 
         data_dir = satscene.time_slot.strftime(conf.get("thx-level2", "archive_dir"))
-        print "    use the all time archive "
+        print("    use the all time archive ")
         filename = os.path.join(
             satscene.time_slot.strftime(conf.get("thx-level2", "archive_dir")),
             satscene.time_slot.strftime(conf.get("thx-level2", "archive_filename", raw=True)) % values)
@@ -77,19 +80,19 @@ def load(satscene, *args, **kwargs):
     # get spatial and temporal resolution
     if "dt" in kwargs:
         dt = float(kwargs["dt"])
-        print "... dt specified by function argument: ", dt
-        print "!!! Attention, argument dt is only implemented for archived data !!!"
+        print("... dt specified by function argument: ", dt)
+        print("!!! Attention, argument dt is only implemented for archived data !!!")
     else:
         dt = float(conf.get("thx-level2", "dt"))
-        print "... dt specified by configuration file:", dt
-    print "... read the observation of the last ", dt, " min"
+        print("... dt specified by configuration file:", dt)
+    print("... read the observation of the last ", dt, " min")
 
     # Load data from txt file 
-    print "... read data from", str(filename), os.path.dirname(filename)
+    print("... read data from", str(filename), os.path.dirname(filename))
 
     if not os.path.isdir(os.path.dirname(filename)):
-        print '*** ERROR, lightning input directory '+str(os.path.dirname(filename))+' cannot be accessed'
-        print '    please check the config file'
+        print('*** ERROR, lightning input directory '+str(os.path.dirname(filename))+' cannot be accessed')
+        print('    please check the config file')
         quit()
     elif len(glob.glob(str(filename))) == 0:
         "*** WARNING, no file "+str(filename)+" found!"
@@ -113,10 +116,10 @@ def load(satscene, *args, **kwargs):
     #print projection
     satscene.area = projection
     
-    print "... channels to load ", satscene.channels_to_load
+    print("... channels to load ", satscene.channels_to_load)
     for chn_name in satscene.channels_to_load:
         # Read variable corresponding to channel name
-        print "... channel to read ", chn_name
+        print("... channel to read ", chn_name)
         if chn_name == 'dens':
             #print "lightning.py: ", type(dens)
             #print "lightning.py: ", dens.data.shape
@@ -231,7 +234,7 @@ def readLightning(file, NEAR_REAL_TIME, time_slot, dt=5, area='ccs4'):
             iCH = (480-ceil(xCH/1000.))  ## 710- ## x/i is in vertical direction         # for Bern 280.0
             jCH = floor(yCH/1000.)-255    # y/j is in horizontal dir.                    # for Bern 345.0
         else:
-            print "... new experimental reprojection"
+            print("... new experimental reprojection")
 
             if True:
                 (jCH, iCH) = obj_area.get_xy_from_lonlat(data['lon'], data['lat'], outside_error=False)       # for Bern (345, 280)
@@ -252,7 +255,7 @@ def readLightning(file, NEAR_REAL_TIME, time_slot, dt=5, area='ccs4'):
         # considered time period 
         dtime = datetime.timedelta(minutes=dt)
 
-        print "--- lightning time        desired time slot     dtime    intra cloud     current[kA]"
+        print("--- lightning time        desired time slot     dtime    intra cloud     current[kA]")
         for i, j, YYYY, MM, DD, hh, mm, ss, ltype, curr in zip(iCH, jCH, years, months, days, hours, mins, secs, intra, current):
             t_light = datetime.datetime(int(YYYY), int(MM), int(DD), int(hh), int(mm), int(float(ss)) ) 
             if ( t_light < time_slot and time_slot-t_light < dtime ):
@@ -273,11 +276,11 @@ def readLightning(file, NEAR_REAL_TIME, time_slot, dt=5, area='ccs4'):
             if time_slot + dtime < t_light :
                 break
     else:
-        print '*** Warning, empty lightning input file '
+        print('*** Warning, empty lightning input file ')
 
-    print '... dens ndim (lightning.py): ', dens.ndim
-    print '... shape (lightning.py): ', dens.shape
-    print '... min/max (lightning.py): ', dens.min(), dens.max()
+    print('... dens ndim (lightning.py): ', dens.ndim)
+    print('... shape (lightning.py): ', dens.shape)
+    print('... min/max (lightning.py): ', dens.min(), dens.max())
 
     return dens, densIC, densCG, curr_abs, curr_neg, curr_pos
 
@@ -309,8 +312,8 @@ def add_lightning(prop, i, j, dx, form):
         interior = ((X-j)**2 + (Y-i)**2) < rr**2
         prop+=1*interior
     else:
-        print '*** ERROR in add_lightning (lightning.py)'
-        print '    unknown form ', form
+        print('*** ERROR in add_lightning (lightning.py)')
+        print('    unknown form ', form)
 
 # ---------------------------------------------------------------------------------
 
@@ -328,14 +331,14 @@ def unfold_lightning(prop, dx, form):
     # print "unfold_lightning at", i, j
     if form == 'square':
         if dx != 1:
-            print "... counting lightning per square with edge lengths of ", dx, " km"
+            print("... counting lightning per square with edge lengths of ", dx, " km")
             # mark a square 
             k = ones([2*dx-1,2*dx-1])
             return ma.asarray( convolve(prop, k, mode="constant", cval=0) ) 
 
     elif form == 'circle':
         if dx != 1:
-            print "... counting lightning inside a circle with a radius of ", dx, " km"
+            print("... counting lightning inside a circle with a radius of ", dx, " km")
             from numpy import arange, meshgrid
             # mark a circle 
             x = arange(0, 2*dx-1) 
@@ -345,13 +348,13 @@ def unfold_lightning(prop, dx, form):
 
     elif form == 'gauss':
         from scipy import ndimage
-        print "unfold_lightning (lighting.py) min/max = ", prop.min(), prop.max()
-        print '... apply gauss filter with half width of (0.5*', dx, ") km"
+        print("unfold_lightning (lighting.py) min/max = ", prop.min(), prop.max())
+        print('... apply gauss filter with half width of (0.5*', dx, ") km")
             # tuned that it looks similar to the circle with the same dx
         data = ma.asarray( ndimage.gaussian_filter(prop, 0.5*dx, output=np.float32) )
         #print "unfold_lightning (lighting.py) min/max = ", data.min(), data.max()
         d_min=0.001
-        print "... neglect small values below ", d_min
+        print("... neglect small values below ", d_min)
         data=ma.masked_less(data, d_min)
         #print "unfold_lightning (lighting.py) min/max = ", data.min(), data.max()
         return data
@@ -359,21 +362,21 @@ def unfold_lightning(prop, dx, form):
     elif form == 'gaussgauss':
         from scipy import ndimage
         #print "unfold_lightning (lighting.py) min/max = ", prop.min(), prop.max()
-        print '... apply DOUBLE gauss filter with half width of (0.5*', dx, ") km"
+        print('... apply DOUBLE gauss filter with half width of (0.5*', dx, ") km")
             # tuned that it looks similar to the circle with the same dx
         prop = ndimage.gaussian_filter(prop, 0.5*dx)
         data = ma.asarray( ndimage.gaussian_filter(prop, 0.5*dx, output=np.float32) )
         #print "unfold_lightning (lighting.py) min/max = ", data.min(), data.max()
         d_min=0.001
-        print "... neglect values below ", d_min
+        print("... neglect values below ", d_min)
         data=ma.masked_less(data, d_min)
         #print "unfold_lightning (lighting.py) min/max = ", data.min(), data.max()
         return data
 
 
     else:
-        print '*** ERROR in unfold_lightning (lightning.py)'
-        print '    unknown form ', form
+        print('*** ERROR in unfold_lightning (lightning.py)')
+        print('    unknown form ', form)
 
 def convert_THXprod_nc_daily(input_file_path, output_file_path, date_obj, dt=5, area='ccs4'):
     """Read THX lightning data file and save as daily nc-file.
@@ -401,7 +404,7 @@ def convert_THXprod_nc_daily(input_file_path, output_file_path, date_obj, dt=5, 
         return
     
     while 60%dt!=0:
-        dt = int(input("*** 60min modulo dt must be 0, enter new dt: ***"))
+        dt = int(eval(input("*** 60min modulo dt must be 0, enter new dt: ***")))
     n_temporal_steps = 24*60/dt
         
     ## Loop over all days provided
@@ -409,8 +412,8 @@ def convert_THXprod_nc_daily(input_file_path, output_file_path, date_obj, dt=5, 
         dat_str = dat.strftime("THX%y%j0000")
         input_file_path_str  = "%s/%s.prd" % (input_file_path,dat_str)
         output_file_path_str = "%s/%s.nc" % (input_file_path,dat_str)
-        print("Convert THX ascii file\n   %s\nto\n   %s" %
-              (input_file_path_str,output_file_path_str))
+        print(("Convert THX ascii file\n   %s\nto\n   %s" %
+              (input_file_path_str,output_file_path_str)))
         
         ## Predefine numpy array for results:
         THX_array = np.zeros((n_temporal_steps,6,640,710))*np.nan
@@ -423,7 +426,7 @@ def convert_THXprod_nc_daily(input_file_path, output_file_path, date_obj, dt=5, 
         for i in range(n_temporal_steps):
             t0 = t0 + datetime.timedelta(minutes=dt)
             t0_list.append(t0)
-            if t0.minute==0: print("   ... working on %s" % datetime.datetime.strftime(t0, "%d.%m.%Y %H:%M"))
+            if t0.minute==0: print(("   ... working on %s" % datetime.datetime.strftime(t0, "%d.%m.%Y %H:%M")))
             THX_tuple = readLightning(file=input_file_path_str, NEAR_REAL_TIME=False,
                                       time_slot=t0, dt=dt, area='ccs4')
             THX_array[i,:,:,:] = np.array(THX_tuple)
@@ -473,7 +476,7 @@ def convert_THXprod_nc_daily_direct(input_file_path, output_file_path, date_obj,
         return
     
     while 60%dt!=0:
-        dt = int(input("*** 60min modulo dt must be 0, enter new dt: "))
+        dt = int(eval(input("*** 60min modulo dt must be 0, enter new dt: ")))
     n_temporal_steps = 24*60/dt
     dtime = datetime.timedelta(minutes=dt)
     
@@ -484,8 +487,8 @@ def convert_THXprod_nc_daily_direct(input_file_path, output_file_path, date_obj,
         dat_str = dat.strftime("THX%y%j0000")
         input_file_path_str  = "%s/%s.prd" % (input_file_path,dat_str)
         output_file_path_str = "%s/%s.nc" % (output_file_path,dat_str)
-        print("Convert THX ascii file\n   %s\nto\n   %s" %
-              (input_file_path_str,output_file_path_str))
+        print(("Convert THX ascii file\n   %s\nto\n   %s" %
+              (input_file_path_str,output_file_path_str)))
         
         ## Set hours, minutes etc to zero:
         t0 = dat.replace(hour=0, minute=0)
@@ -502,7 +505,7 @@ def convert_THXprod_nc_daily_direct(input_file_path, output_file_path, date_obj,
             THX_nc(output_file_path_str,THX_array_curr,THX_array_dens,
                    dat,dat_str,n_temporal_steps,dt,temporal_steps)
             t2 = datetime.datetime.now()
-            print("  Elapsed time for NetCDF conversion: "+str(t2-t1)+"\n")
+            print(("  Elapsed time for NetCDF conversion: "+str(t2-t1)+"\n"))
             continue
         
         ## If file is not empty, read it:
@@ -518,7 +521,7 @@ def convert_THXprod_nc_daily_direct(input_file_path, output_file_path, date_obj,
             THX_nc(output_file_path_str,THX_array_curr,THX_array_dens,
                    dat,dat_str,n_temporal_steps,dt,temporal_steps)
             t2 = datetime.datetime.now()
-            print("  Elapsed time for NetCDF conversion: "+str(t2-t1)+"\n")
+            print(("  Elapsed time for NetCDF conversion: "+str(t2-t1)+"\n"))
             continue
             #days    = str(data['date'])[ 0: 2]
             #months  = str(data['date'])[ 3: 5]
@@ -578,7 +581,7 @@ def convert_THXprod_nc_daily_direct(input_file_path, output_file_path, date_obj,
         ## Save as nc-file:
         THX_nc(output_file_path_str,THX_array_curr,THX_array_dens,dat,dat_str,n_temporal_steps,dt,temporal_steps)
         t2 = datetime.datetime.now()
-        print("  Elapsed time for NetCDF conversion: "+str(t2-t1)+"\n")
+        print(("  Elapsed time for NetCDF conversion: "+str(t2-t1)+"\n"))
 
         
 def THX_nc(output_file_path_str,THX_array_curr,THX_array_dens,dat,dat_str,
@@ -643,12 +646,12 @@ def THX_nc(output_file_path_str,THX_array_curr,THX_array_dens,dat,dat_str,
     x_axis[:]    = np.arange(255,965)+0.5
     y_axis[::-1] = np.arange(-160,480)+0.5
 
-    dens.setncatts({'long_name': u"Lightning density",'units': u"km-2"})
-    densCG.setncatts({'long_name': u"Lightning density (cloud-to-ground)",'units': u"km-2"})
-    densIC.setncatts({'long_name': u"Lightning density (Inter/Intra-cloud)",'units': u"km-2"})
-    curr_abs.setncatts({'long_name': u"Absolute current",'units': u"kA"})
-    curr_pos.setncatts({'long_name': u"Negative current",'units': u"kA"})
-    curr_neg.setncatts({'long_name': u"Positive current",'units': u"kA"})
+    dens.setncatts({'long_name': "Lightning density",'units': "km-2"})
+    densCG.setncatts({'long_name': "Lightning density (cloud-to-ground)",'units': "km-2"})
+    densIC.setncatts({'long_name': "Lightning density (Inter/Intra-cloud)",'units': "km-2"})
+    curr_abs.setncatts({'long_name': "Absolute current",'units': "kA"})
+    curr_pos.setncatts({'long_name': "Negative current",'units': "kA"})
+    curr_neg.setncatts({'long_name': "Positive current",'units': "kA"})
     
     #dens.units = densCG.units = densIC.units = 'km-2' # = 'count'#
     #curr_abs.units = curr_pos.units = curr_neg.units = 'kA'
@@ -658,13 +661,13 @@ def THX_nc(output_file_path_str,THX_array_curr,THX_array_dens,dat,dat_str,
     curr_abs[:,:,:] = THX_array_curr[:,0,:,:]
     curr_neg[:,:,:] = THX_array_curr[:,1,:,:]
     curr_pos[:,:,:] = THX_array_curr[:,2,:,:]
-    print("   Max density value = %d" % np.max(dens))
+    print(("   Max density value = %d" % np.max(dens)))
         
     dataset.description = 'THX Lightning data of day '+dat.strftime("%d.%m.%Y")
     dataset.history = 'Created ' + datetime.datetime.now().strftime("%d.%m.%Y %H:%M")
     
     dataset.close()
-    print("   Written NetCDF file for: %s" % dat.strftime("%d.%m.%y"))
+    print(("   Written NetCDF file for: %s" % dat.strftime("%d.%m.%y")))
     
     
     

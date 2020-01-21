@@ -1,3 +1,6 @@
+from __future__ import division
+from __future__ import print_function
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -80,7 +83,7 @@ def process_array(elt, ascii=False):
     del ascii
     chld = elt.getchildren()
     if len(chld) > 1:
-        print "stop"
+        print("stop")
         raise ValueError()
     chld = chld[0]
     try:
@@ -177,7 +180,7 @@ def parse_format(xml_file):
     stypes = {}
     scales = {}
 
-    for key, val in types_scales.items():
+    for key, val in list(types_scales.items()):
         types[key] = to_dtype(val)
         stypes[key] = to_scaled_dtype(val)
         scales[key] = to_scales(val)
@@ -208,7 +211,7 @@ class XMLFormat(object):
 
         self.translator = {}
 
-        for key, val in self.types.items():
+        for key, val in list(self.types.items()):
             self.translator[val] = (self.scales[key], self.stypes[key])
 
     def dtype(self, key):

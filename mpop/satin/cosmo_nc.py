@@ -1,3 +1,6 @@
+from __future__ import division
+from __future__ import print_function
+
 """Loader for MSG, netcdf format.
 """
 from ConfigParser import ConfigParser
@@ -31,17 +34,17 @@ def load(satscene, **kwargs):
     conf.read(os.path.join(CONFIG_PATH, satscene.fullname + ".cfg"))
 
     t0=satscene.time_slot
-    print "time to show:", t0
+    print("time to show:", t0)
     ftime = int(satscene.time_slot.strftime("%H")) % 3
     model_starthour = int(satscene.time_slot.strftime("%H")) - ftime
     model_starttime = datetime(t0.year, t0.month, t0.day, model_starthour, 0, 0) 
-    print "available calc time (until now): ", datetime.now()-model_starttime
+    print("available calc time (until now): ", datetime.now()-model_starttime)
     # check if COSMO model already produced output, if not take run from 3 hours before
     if datetime.now()-model_starttime < timedelta(minutes=80):
-        print "... COSMO results from model start ",model_starttime ," not yet ready,. take run three hours before"
+        print("... COSMO results from model start ",model_starttime ," not yet ready,. take run three hours before")
         model_starttime -= timedelta(minutes=180)
         ftime += 3
-    print model_starttime
+    print(model_starttime)
          
     
     ftime_str = "%02d" % ftime # in hours
@@ -52,10 +55,10 @@ def load(satscene, **kwargs):
     filename = os.path.join( model_starttime.strftime(conf.get("cosmo-level2", "dir", raw=True)),
                              model_starttime.strftime(conf.get("cosmo-level2", "filename", raw=True)) % values)
 
-    print "... search for file: ", filename
+    print("... search for file: ", filename)
     filenames=glob(str(filename))
     if len(filenames) == 0:
-        print "*** Error, no file found"
+        print("*** Error, no file found")
         quit()
     elif len(filenames) == 1:
         filename = filenames[0]
@@ -66,21 +69,21 @@ def load(satscene, **kwargs):
             #infile = filenames[fileformats.index('bz2')]
             call("cp "+ filename+" /tmp 2>&1", shell=True)
             tmpfile = '/tmp/'+basename(filename)
-            print "... bunzip2 "+tmpfile
+            print("... bunzip2 "+tmpfile)
             call("/bin/bunzip2 "+ tmpfile+" 2>&1", shell=True)
-            print "... remove "+tmpfile
+            print("... remove "+tmpfile)
             call("rm "+ tmpfile+" 2>&1", shell=True)
             filename = tmpfile[:-4]
             copy_file=True
     elif len(filenames) > 1:
-        print "*** Warning, more than 1 datafile found: ", filenames
+        print("*** Warning, more than 1 datafile found: ", filenames)
         for this_file in filenames:
             if this_file.split(".")[-1] == 'nc':
                 filename=this_file
-                print "*** Choose first nc file: ", filename
+                print("*** Choose first nc file: ", filename)
                 break
         
-    print("... read data from %s" % str(filename))
+    print(("... read data from %s" % str(filename)))
 
     # Load data from netCDF file
     ncfile = Dataset(filename,'r')
@@ -89,7 +92,7 @@ def load(satscene, **kwargs):
     # !!! BAD: THIS INFORMATION SHOULD BE SAVED IN THE FILE !!!
     area = 'ccs4'
     area_def = get_area_def(area)
-    print "... set area to ", area 
+    print("... set area to ", area) 
     #satscene.area = area_def
         
     for chn_name in satscene.channels_to_load:

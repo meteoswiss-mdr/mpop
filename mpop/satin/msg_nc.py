@@ -1,3 +1,6 @@
+from __future__ import division
+from __future__ import print_function
+
 """Loader for MSG, netcdf format.
 """
 from ConfigParser import ConfigParser
@@ -28,28 +31,28 @@ def load(satscene, **kwargs):
     conf = ConfigParser()
     conf.read(os.path.join(CONFIG_PATH, satscene.fullname + ".cfg"))
 
-    if "reader_level" in kwargs.keys():
+    if "reader_level" in list(kwargs.keys()):
         if kwargs["reader_level"] is not None and kwargs["reader_level"] != "":
             reader_level = kwargs["reader_level"]
         else:
             reader_level = "seviri-level8"
     else:
         reader_level = "seviri-level8"
-    print "... use reader_level:", reader_level
+    print("... use reader_level:", reader_level)
                 
     # assume this is reader_level seviri-level8
     filename = os.path.join( satscene.time_slot.strftime(conf.get(reader_level, "dir", raw=True)),
                              satscene.time_slot.strftime(conf.get(reader_level, "filename", raw=True)))
 
-    print "... search for file: ", filename
+    print("... search for file: ", filename)
     filenames=glob(str(filename))
     if len(filenames) == 0:
-        print "*** Error, no file found"
+        print("*** Error, no file found")
         return -1
     elif len(filenames) > 1:
-        print "*** Warning, more than 1 datafile found: ", filenames 
+        print("*** Warning, more than 1 datafile found: ", filenames) 
     filename = filenames[0]
-    print("... read data from %s" % str(filename))
+    print(("... read data from %s" % str(filename)))
 
     # Load data from netCDF file
     ncfile = Dataset(filename,'r')
@@ -67,14 +70,14 @@ def load(satscene, **kwargs):
     # !!! CURRENTLY: area is set fixed to ccs4     
     area = 'ccs4'
     area_def = get_area_def(area)
-    print "... set area to ", area 
+    print("... set area to ", area) 
     #satscene.area = area_def
     
     for chn_name in satscene.channels_to_load:
         #print '    load ', chn_name
         
         # only read variables which are in the netCDF file
-        if chn_name in long_names.keys():
+        if chn_name in list(long_names.keys()):
         
             # Read variable corresponding to channel name
             data = ncfile.variables[chn_name][:,:,0] # attention [:,:] or [:] is really necessary
