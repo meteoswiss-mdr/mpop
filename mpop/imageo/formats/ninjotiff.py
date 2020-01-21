@@ -34,6 +34,8 @@ distributed consistent with their licensing terms.
 Edited by Christian Kliche (Ernst Basler + Partner) to replace pylibtiff with
 a modified version of tifffile.py (created by Christoph Gohlke)
 """
+from __future__ import division
+from __future__ import print_function
 
 import calendar
 import logging
@@ -110,7 +112,7 @@ NINJO_TAGS = {
     "NTD_TransparentPixel": 50000
 }
 
-NINJO_TAGS_INV = dict((v, k) for k, v in NINJO_TAGS.items())
+NINJO_TAGS_INV = dict((v, k) for k, v in list(NINJO_TAGS.items()))
 
 #
 # model_pixel_scale_tag_count ? ...
@@ -156,10 +158,9 @@ class _Singleton(type):
             cls.instance = super(_Singleton, cls).__call__(*args, **kwargs)
         return cls.instance
 
-
 class ProductConfigs(object):
     __metaclass__ = _Singleton
-
+#class ProductConfigs(object, metaclass=_Singleton): #suggestion by python2to3 program 
     def __init__(self):
         self.read_config()
 
@@ -263,7 +264,7 @@ def _get_satellite_altitude(filename):
                      'NOAA': 870.0}
 
     filename = os.path.basename(filename).upper()
-    for nam_, alt_ in sat_altitudes.items():
+    for nam_, alt_ in list(sat_altitudes.items()):
         if nam_ in filename:
             return alt_
     return None
@@ -483,7 +484,7 @@ def save(geo_image, filename, ninjo_product_name=None, writer_options=None,
     kwargs['image_dt'] = time_slot
     kwargs['is_calibrated'] = True
     if geo_image.mode == 'P' and 'cmap' not in kwargs:
-        r, g, b = zip(*geo_image.palette)
+        r, g, b = list(zip(*geo_image.palette))
         r = list((np.array(r) * 255).astype(np.uint8))
         g = list((np.array(g) * 255).astype(np.uint8))
         b = list((np.array(b) * 255).astype(np.uint8))
@@ -1032,7 +1033,7 @@ def read_tags(filename):
     with tifffile.TiffFile(filename) as tif:
         for page in tif:
             tags = {}
-            for tag in page.tags.values():
+            for tag in list(page.tags.values()):
                 name, value = tag.name, tag.value
                 try:
                     # Is it one of ours ?
@@ -1061,9 +1062,10 @@ if __name__ == '__main__':
     try:
         filename = args[0]
     except IndexError:
-        print >> sys.stderr, """usage: python ninjotiff.py [<-p page-number>] [-c] <ninjotiff-filename>
-    -p <page-number>: print page number (default are all pages).
-    -c: print color maps (default is not to print color maps)."""
+        print("""usage: python ninjotiff.py [<-p page-number>] [-c] <ninjotiff-filename>
+              -p <page-number>: print page number (default are all pages).
+              -c: print color maps (default is not to print color maps).""",
+              file=sys.stderr)
         sys.exit(2)
 
     pages = read_tags(filename)
@@ -1071,12 +1073,12 @@ if __name__ == '__main__':
         try:
             pages = [pages[page_no]]
         except IndexError:
-            print >>sys.stderr, "Invalid page number '%d'" % page_no
+            print("Invalid page number '%d'" % page_no, file=sys.stderr)
             sys.exit(2)
     for page in pages:
         names = sorted(page.keys())
-        print ""
+        print("")
         for name in names:
             if not print_color_maps and name == "color_map":
                 continue
-            print name, page[name]
+            print(name, page[name])
