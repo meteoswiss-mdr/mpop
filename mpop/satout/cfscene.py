@@ -498,8 +498,8 @@ def stere2cf(proj_dict):
     """
 
     return {"grid_mapping_name": "stereographic",
-            "latitude_of_projection_origin": eval(proj_dict["lat_0"]),
-            "longitude_of_projection_origin": eval(proj_dict["lon_0"]),
+            "latitude_of_projection_origin": eval(str(proj_dict["lat_0"])),
+            "longitude_of_projection_origin": eval(str(proj_dict["lon_0"])),
             "scale_factor_at_projection_origin": eval(
                 proj_dict.get("x_0", "1.0")),
             "false_easting": eval(proj_dict.get("x_0", "0")),
