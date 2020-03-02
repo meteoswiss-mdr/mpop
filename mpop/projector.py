@@ -34,7 +34,7 @@ satellite projection to an area of interest in polar projection for
 example.
 """
 import os
-import ConfigParser
+import configparser
 import logging
 
 import numpy as np
@@ -59,7 +59,7 @@ def get_area_file():
     if area_file:
         return area_file
 
-    conf = ConfigParser.ConfigParser()
+    conf = configparser.ConfigParser()
     conf.read(os.path.join(CONFIG_PATH, "mpop.cfg"))
 
     try:
@@ -67,7 +67,7 @@ def get_area_file():
                                           "area_directory") or
                                  CONFIG_PATH,
                                  conf.get("projector", "area_file"))
-    except ConfigParser.NoSectionError:
+    except configparser.NoSectionError:
         area_file = ""
         logger.warning("Couldn't find the mpop.cfg file. "
                        "Do you have one ? is it in $PPP_CONFIG_DIR ?")
@@ -131,7 +131,7 @@ class Projector(object):
         self._filename = None
         self.mode = "quick"
         self.radius = radius
-        self.conf = ConfigParser.ConfigParser()
+        self.conf = configparser.ConfigParser()
         self.conf.read(os.path.join(CONFIG_PATH, "mpop.cfg"))
 
         # TODO:
@@ -162,7 +162,7 @@ class Projector(object):
         try:
             projections_directory = self.conf.get("projector",
                                                   "projections_directory")
-        except ConfigParser.NoSectionError:
+        except configparser.NoSectionError:
             pass
 
         self._filename = get_precompute_cache_fname(in_id, out_id,

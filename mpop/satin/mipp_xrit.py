@@ -30,7 +30,8 @@
 
 """Interface to Eumetcast level 1.5 HRIT/LRIT format. Uses the MIPP reader.
 """
-import ConfigParser
+#import ConfigParser
+import configparser
 import fnmatch
 import logging
 import os
@@ -73,7 +74,7 @@ def load(satscene, calibrate=True, area_extent=None, area_def_names=None,
     radiances only).
     """
 
-    conf = ConfigParser.RawConfigParser()
+    conf = configparser.RawConfigParser()
     conf.read(os.path.join(CONFIG_PATH, satscene.fullname + ".cfg"))
     options = {}
     for option, value in conf.items(satscene.instrument_name + "-level2"):
@@ -204,7 +205,7 @@ def load_generic(satscene, options, calibrate=True, area_extent=None,
                     raise ValueError("Slicing area must be in "
                                      "geos projection, and lon_0 should match "
                                      "the satellite's position.")
-            except ReaderError, err:
+            except ReaderError as err:
                 # if channel can't be found, go on with next channel
                 LOGGER.error(str(err))
                 continue

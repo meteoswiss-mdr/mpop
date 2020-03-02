@@ -30,7 +30,8 @@ itself, it hold the mighty :meth:`mpop.satellites.get_satellite_class` method.
 """
 import os.path
 import weakref
-from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+#from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+from configparser import ConfigParser, NoSectionError, NoOptionError
 import logging
 
 from mpop import CONFIG_PATH
@@ -67,7 +68,7 @@ def get_custom_composites(name):
         return []
 
 
-def get_sat_instr_compositer((satellite, number, variant), instrument):
+def get_sat_instr_compositer(satellite_data, instrument):
     """Get the compositer class for a given satellite, defined by the three
     strings *satellite*, *number*, and *variant*, and *instrument*. The class
     is then filled with custom composites if there are any (see
@@ -76,6 +77,8 @@ def get_sat_instr_compositer((satellite, number, variant), instrument):
     :func:`build_sat_instr_compositer`.
     """
 
+    (satellite, number, variant) = satellite_data
+    
     module_name = variant + satellite + number
     class_name = (variant.capitalize() + satellite.capitalize() +
                   number.capitalize() + instrument.capitalize())
@@ -110,7 +113,7 @@ def build_instrument_compositer(instrument_name):
     return instrument_class
 
 
-def build_sat_instr_compositer((satellite, number, variant), instrument):
+def build_sat_instr_compositer(satellite_data, instrument):
     """Build a compositer class for the given satellite (defined by the three
     strings *satellite*, *number*, and *variant*) and *instrument* on the fly,
     using data from a corresponding config file. They inherit from the
@@ -119,6 +122,8 @@ def build_sat_instr_compositer((satellite, number, variant), instrument):
     available (see :func:`build_instrument_compositer`).
     """
 
+    (satellite, number, variant) = satellite_data
+    
     fullname = variant + satellite + number
 
     conf = ConfigParser()

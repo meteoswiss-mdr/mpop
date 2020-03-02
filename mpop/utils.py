@@ -33,7 +33,8 @@
 
 import os
 import re
-import ConfigParser
+#import ConfigParser
+import configparser
 import logging
 
 from mpop import CONFIG_PATH
@@ -46,7 +47,7 @@ class OrderedConfigParser(object):
     """
 
     def __init__(self, *args, **kwargs):
-        self.config_parser = ConfigParser.ConfigParser(*args, **kwargs)
+        self.config_parser = configparser.ConfigParser(*args, **kwargs)
 
     def __getattr__(self, name):
         return getattr(self.config_parser, name)
@@ -60,7 +61,7 @@ class OrderedConfigParser(object):
             config = conf_file.read()
             config_keys = re.findall(r'\[.*\]', config)
             self.section_keys = [key[1:-1] for key in config_keys]
-        except IOError, e:
+        except IOError as e:
             # Pass if file not found
             if e.errno != 2:
                 raise
@@ -105,11 +106,11 @@ def debug_on():
 _is_logging_on = False
 
 # Read default log level from mpop's config file
-_config = ConfigParser.ConfigParser()
+_config = configparser.ConfigParser()
 _config.read(os.path.join(CONFIG_PATH, 'mpop.cfg'))
 try:
     default_loglevel = _config.get('general', 'loglevel')
-except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+except (configparser.NoOptionError, configparser.NoSectionError):
     default_loglevel = 'WARNING'
 default_loglevel = getattr(logging, default_loglevel.upper())
 del _config

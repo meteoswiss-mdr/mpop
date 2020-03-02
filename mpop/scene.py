@@ -30,7 +30,8 @@ also for a given area.
 from __future__ import division
 from __future__ import print_function
 
-import ConfigParser
+#import ConfigParser
+import configparser
 import copy
 import datetime
 import imp
@@ -81,9 +82,9 @@ class Satellite(object):
     """This is the satellite class. It contains information on the satellite.
     """
 
-    def __init__(self, (satname, number, variant)=(None, None, None)):
-#    def __init__(self, xxx_todo_changeme=(None, None, None)):
-#        (satname, number, variant) = xxx_todo_changeme
+#    def __init__(self, (satname, number, variant)=(None, None, None)):
+    def __init__(self, satellite_data=(None, None, None)):
+        (satname, number, variant) = satellite_data
         try:
             self.satname = satname or "" or self.satname
         except AttributeError:
@@ -252,17 +253,17 @@ class SatelliteInstrumentScene(SatelliteScene):
                     name = eval(conf.get(section, "name"))
                     try:
                         w_range = eval(conf.get(section, "frequency"))
-                    except ConfigParser.NoOptionError:
+                    except configparser.NoOptionError:
                         w_range = (-np.inf, -np.inf, -np.inf)
                     try:
                         resolution = eval(conf.get(section, "resolution"))
-                    except ConfigParser.NoOptionError:
+                    except configparser.NoOptionError:
                         resolution = 0
                     self.channels.append(Channel(name=name,
                                                  wavelength_range=w_range,
                                                  resolution=resolution))
 
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+        except (configparser.NoSectionError, configparser.NoOptionError):
             for name, w_range, resolution in self.channel_list:
                 self.channels.append(Channel(name=name,
                                              wavelength_range=w_range,
@@ -471,15 +472,15 @@ class SatelliteInstrumentScene(SatelliteScene):
                 self.channels_to_load -= set([chn])
                 
         # find the plugin to use from the config file
-        conf = ConfigParser.ConfigParser()
+        conf = configparser.ConfigParser()
         try:
             conf.read(os.path.join(CONFIG_PATH, self.fullname + ".cfg"))
             if len(conf.sections()) == 0:
-                raise ConfigParser.NoSectionError(("Config file did "
+                raise configparser.NoSectionError(("Config file did "
                                                    "not make sense"))
             levels = [section for section in conf.sections()
                       if section.startswith(self.instrument_name + "-level")]
-        except ConfigParser.NoSectionError:
+        except configparser.NoSectionError:
             LOG.warning("Can't load data, no config file for " + self.fullname)
             self.channels_to_load = set()
             return
@@ -491,7 +492,7 @@ class SatelliteInstrumentScene(SatelliteScene):
             levels = levels[1:]
 
         if len(levels) == 0:
-            raise ConfigParser.NoSectionError(
+            raise configparser.NoSectionError(
                 self.instrument_name + "-levelN (N>1) to tell me how to" +
                 " read data... Not reading anything.")
 
@@ -606,7 +607,7 @@ class SatelliteInstrumentScene(SatelliteScene):
 
         from pyorbital.tlefile import get_norad_line
         sat_line = get_norad_line(self.satname, self.number)
-        #print "mpop/scene.py: sat_line=", sat_line
+        #print ("mpop/scene.py: sat_line=", sat_line)
 
         if not ("METEOSAT" in sat_line):
             # default solution: download most recent TLE
