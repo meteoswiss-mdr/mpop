@@ -34,7 +34,7 @@ satellite projection to an area of interest in polar projection for
 example.
 """
 import os
-import ConfigParser
+import configparser
 import logging
 
 import numpy as np
